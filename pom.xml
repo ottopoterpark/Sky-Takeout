@@ -34,6 +34,7 @@
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <poi>3.16</poi>
+        <swagger>4.1.0</swagger>
     </properties>
 <!--    依赖控制-->
     <dependencyManagement>
@@ -55,6 +56,13 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok}</version>
+            </dependency>
+
+<!--            Swagger-->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${swagger}</version>
             </dependency>
 
             <dependency>
