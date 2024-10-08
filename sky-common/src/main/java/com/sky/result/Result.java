@@ -17,21 +17,21 @@ public class Result<T> implements Serializable {
 
     public static <T> Result<T> success() {
         Result<T> result = new Result<T>();
-        result.code = 1;
+        result.setCode(1);
         return result;
     }
 
     public static <T> Result<T> success(T object) {
         Result<T> result = new Result<T>();
-        result.data = object;
-        result.code = 1;
+        result.setData(object);
+        result.setCode(1);
         return result;
     }
 
     public static <T> Result<T> error(String msg) {
         Result result = new Result();
-        result.msg = msg;
-        result.code = 0;
+        result.setMsg(msg);
+        result.setCode(0);
         return result;
     }
 
