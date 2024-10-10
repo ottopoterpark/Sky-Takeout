@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
@@ -7,29 +8,23 @@ import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.BaseException;
 import com.sky.exception.EmployeeSaveException;
 import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.function.ServerRequest;
-
-import java.net.http.HttpRequest;
+import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +35,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/employee")
 @Slf4j
-@Tag(name = "员工操作接口")
 public class EmployeeController {
 
     @Autowired
@@ -55,7 +49,6 @@ public class EmployeeController {
      * @return
      */
     @PostMapping("/login")
-    @Operation(summary = "员工登录接口")
     public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) {
         log.info("员工登录：{}", employeeLoginDTO);
 
@@ -85,7 +78,6 @@ public class EmployeeController {
      * @return
      */
     @PostMapping("/logout")
-    @Operation(summary = "员工注销接口")
     @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = BaseException.class)
     public Result<String> logout() {
         return Result.success();
@@ -97,7 +89,6 @@ public class EmployeeController {
      * @return
      */
     @PostMapping
-    @Operation(summary = "新增员工接口")
     @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = EmployeeSaveException.class)
     public Result save(@RequestBody EmployeeDTO employeeDTO)
     {
@@ -116,7 +107,7 @@ public class EmployeeController {
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
         employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
-        // 获取当前登录用户的id
+        // 获取当前登录用户的id-
         employee.setCreateUser(BaseContext.getCurrentId());
         employee.setUpdateUser(BaseContext.getCurrentId());
 
@@ -124,6 +115,27 @@ public class EmployeeController {
         employeeService.save(employee);
 
         return Result.success();
+    }
+
+    /**
+     * 分页查询
+     * @param query
+     * @return
+     */
+    @GetMapping("/page")
+    public Result<PageResult> page(EmployeePageQueryDTO query)
+    {
+        //分页查询条件
+        Page<Employee> p = Page.of(query.getPage(), query.getPageSize());
+        p = employeeService.lambdaQuery()
+                .like(query.getName() != null, Employee::getName, query.getName())
+                .page(p);
+        //封装查询结果
+        PageResult pageResult = new PageResult();
+        pageResult.setTotal(p.getTotal());
+        pageResult.setRecords(p.getRecords());
+        //返回结果
+        return Result.success(pageResult);
     }
 
 }
