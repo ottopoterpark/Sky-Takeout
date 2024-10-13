@@ -6,7 +6,7 @@ import com.sky.constant.StatusConstant;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
-import com.sky.exception.AccountNotFoundException;
+import com.sky.exception.LoginFailedException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.service.EmployeeService;
@@ -31,16 +31,14 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper,Employee> im
         String password = employeeLoginDTO.getPassword();
 
         //1、根据用户名查询数据库中的数据
-//        Employee employee = employeeMapper.getByUsername(username);
         Employee employee = lambdaQuery().eq(Employee::getUsername, username).one();
 
         //2、处理各种异常情况（用户名不存在、密码不对、账号被锁定）
         if (employee == null)
             //账号不存在
-            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
+            throw new LoginFailedException(MessageConstant.ACCOUNT_NOT_FOUND);
 
         //密码比对
-
         password=DigestUtils.md5DigestAsHex(password.getBytes());
 
         if (!password.equals(employee.getPassword())) {

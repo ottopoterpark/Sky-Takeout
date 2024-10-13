@@ -10,7 +10,6 @@ import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
-import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.BaseException;
 import com.sky.exception.EmployeeSaveException;
 import com.sky.properties.JwtProperties;
@@ -169,8 +168,6 @@ public class EmployeeController {
     {
         log.info("根据id查找员工:{}",id);
         Employee employee = employeeService.lambdaQuery().eq(Employee::getId, id).one();
-        if(employee==null)
-            throw new AccountNotFoundException("用户不存在");
         return Result.success(employee);
     }
 
