@@ -1,10 +1,18 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.constant.MessageConstant;
+import com.sky.constant.StatusConstant;
+import com.sky.context.BaseContext;
 import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
@@ -14,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.desktop.QuitEvent;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin/category")
@@ -59,7 +69,6 @@ public class CategoryController {
                 .eq(Category::getId,query.getId())
                 .set(Category::getName,query.getName())
                 .set(Category::getSort,query.getSort())
-                .set(Category::getType,query.getType())
                 .update();
         return Result.success();
     }
@@ -78,6 +87,64 @@ public class CategoryController {
                 .eq(Category::getId,id)
                 .set(Category::getStatus,status)
                 .update();
+        return Result.success();
+    }
+
+    /**
+     * 新增分类
+     * @param categoryDTO
+     * @return
+     */
+    @PostMapping
+    @Transactional
+    public Result save(@RequestBody CategoryDTO categoryDTO)
+    {
+        log.info("新增分类:{}",categoryDTO);
+        Category category = Category.builder()
+                .name(categoryDTO.getName())
+                .sort(categoryDTO.getSort())
+                .type(categoryDTO.getType())
+                .status(StatusConstant.DISABLE)
+                .createTime(LocalDateTime.now())
+                .updateTime(LocalDateTime.now())
+                .createUser(BaseContext.getCurrentId())
+                .updateUser(BaseContext.getCurrentId())
+                .build();
+        categoryService.save(category);
+        return Result.success();
+    }
+
+    /**
+     * 根据类型查询分类
+     * @param type
+     * @return
+     */
+    @GetMapping("/list")
+    public Result<List<Category>> list(Integer type)
+    {
+        log.info("根据类型查询分类");
+        List<Category> list = categoryService.lambdaQuery()
+                .eq(Category::getType, type)
+                .list();
+        return Result.success(list);
+    }
+
+    /**
+     * 根据id删除分类
+     * @param id
+     * @return
+     */
+    @DeleteMapping
+    @Transactional
+    public Result delete(Long id)
+    {
+        log.info("根据id删除分类:{}",id);
+        List<Dish> list = Db.lambdaQuery(Dish.class)
+                .eq(Dish::getCategoryId, id)
+                .list();
+        if(list.size()!=0)
+            return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
+        categoryService.remove(new LambdaQueryWrapper<Category>().eq(Category::getId, id));
         return Result.success();
     }
 }
