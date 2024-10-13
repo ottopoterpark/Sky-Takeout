@@ -80,7 +80,9 @@ public class EmployeeController {
      */
     @PostMapping("/logout")
     @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = BaseException.class)
-    public Result<String> logout() {
+    public Result<String> logout()
+    {
+        log.info("退出");
         return Result.success();
     }
 
@@ -94,7 +96,6 @@ public class EmployeeController {
     public Result save(@RequestBody EmployeeDTO employeeDTO)
     {
         log.info("新增员工:{}",employeeDTO);
-
         Employee employeeJudge = employeeService.lambdaQuery().eq(Employee::getUsername, employeeDTO.getUsername()).one();
         if (employeeJudge!=null)
             throw new EmployeeSaveException(MessageConstant.USERNAME_DUPLICATE);
@@ -108,7 +109,7 @@ public class EmployeeController {
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
         employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
-        // 获取当前登录用户的id-
+        // 获取当前登录用户的id
         employee.setCreateUser(BaseContext.getCurrentId());
         employee.setUpdateUser(BaseContext.getCurrentId());
 
@@ -126,6 +127,7 @@ public class EmployeeController {
     @GetMapping("/page")
     public Result<PageResult> page(EmployeePageQueryDTO query)
     {
+        log.info("分页查询:{}",query);
         //分页查询条件
         Page<Employee> p = Page.of(query.getPage(), query.getPageSize());
         p = employeeService.lambdaQuery()
@@ -142,13 +144,14 @@ public class EmployeeController {
     /**
      * 修改员工状态
      * @param status
-     * @param employeeDTO
+     * @param id
      * @return
      */
     @Transactional
     @PostMapping("/status/{status}")
     public Result changeStatus(@PathVariable Integer status,Long id)
     {
+        log.info("修改员工状态:{} {}",status,id);
         employeeService.lambdaUpdate()
                 .set(Employee::getStatus,status)
                 .eq(Employee::getId,id)
@@ -164,6 +167,7 @@ public class EmployeeController {
     @GetMapping("/{id}")
     public Result<Employee> getOneById(@PathVariable Long id)
     {
+        log.info("根据id查找员工:{}",id);
         Employee employee = employeeService.lambdaQuery().eq(Employee::getId, id).one();
         if(employee==null)
             throw new AccountNotFoundException("用户不存在");
@@ -179,6 +183,7 @@ public class EmployeeController {
     @Transactional
     public Result update(@RequestBody EmployeeDTO employeeDTO)
     {
+        log.info("修改员工信息:{}",employeeDTO);
         employeeService.lambdaUpdate()
                 .eq(Employee::getId, employeeDTO.getId())
                 .set(Employee::getIdNumber, employeeDTO.getIdNumber())
@@ -189,4 +194,6 @@ public class EmployeeController {
                 .update();
         return Result.success();
     }
+
+
 }
