@@ -1,3 +1,4 @@
+# git忽略文件
 **/target/
 .idea
 *.iml

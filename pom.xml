@@ -13,7 +13,7 @@
 <!--    父工程打包方式为pom-->
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
-<!--    聚合子工程-->
+<!--    聚合所有子工程-->
     <modules>
         <module>sky-common</module>
         <module>sky-pojo</module>
