@@ -10,6 +10,7 @@ import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
+import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.BaseException;
 import com.sky.exception.EmployeeSaveException;
 import com.sky.properties.JwtProperties;
@@ -138,4 +139,54 @@ public class EmployeeController {
         return Result.success(pageResult);
     }
 
+    /**
+     * 修改员工状态
+     * @param status
+     * @param employeeDTO
+     * @return
+     */
+    @Transactional
+    @PostMapping("/status/{status}")
+    public Result changeStatus(@PathVariable Integer status,Long id)
+    {
+        employeeService.lambdaUpdate()
+                .set(Employee::getStatus,status)
+                .eq(Employee::getId,id)
+                .update();
+        return Result.success();
+    }
+
+    /**
+     * 根据id查找员工
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<Employee> getOneById(@PathVariable Long id)
+    {
+        Employee employee = employeeService.lambdaQuery().eq(Employee::getId, id).one();
+        if(employee==null)
+            throw new AccountNotFoundException("用户不存在");
+        return Result.success(employee);
+    }
+
+    /**
+     * 修改员工信息
+     * @param employeeDTO
+     * @return
+     */
+    @PutMapping
+    @Transactional
+    public Result update(@RequestBody EmployeeDTO employeeDTO)
+    {
+        employeeService.lambdaUpdate()
+                .eq(Employee::getId, employeeDTO.getId())
+                .set(Employee::getIdNumber, employeeDTO.getIdNumber())
+                .set(Employee::getUsername, employeeDTO.getUsername())
+                .set(Employee::getName, employeeDTO.getName())
+                .set(Employee::getSex, employeeDTO.getSex())
+                .set(Employee::getPhone, employeeDTO.getPhone())
+                .update();
+        return Result.success();
+    }
 }
