@@ -45,15 +45,38 @@ public class CategoryController {
         return Result.success(data);
     }
 
+    /**
+     * 修改分类
+     * @param query
+     * @return
+     */
     @PutMapping
     @Transactional
     public Result update(@RequestBody CategoryDTO query)
     {
+        log.info("修改分类:{}",query);
         categoryService.lambdaUpdate()
                 .eq(Category::getId,query.getId())
                 .set(Category::getName,query.getName())
                 .set(Category::getSort,query.getSort())
                 .set(Category::getType,query.getType())
+                .update();
+        return Result.success();
+    }
+
+    /**
+     * 启用，禁用分类
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result changeStatus(@PathVariable Integer status,Long id)
+    {
+        log.info("启用，禁用分类:{} {}",status,id);
+        categoryService.lambdaUpdate()
+                .eq(Category::getId,id)
+                .set(Category::getStatus,status)
                 .update();
         return Result.success();
     }
