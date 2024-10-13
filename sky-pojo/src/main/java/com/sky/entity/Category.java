@@ -29,6 +29,7 @@ public class Category implements Serializable {
     //分类状态 0标识禁用 1表示启用
     private Integer status;
 
+    //公共字段
     //创建时间
     private LocalDateTime createTime;
 
