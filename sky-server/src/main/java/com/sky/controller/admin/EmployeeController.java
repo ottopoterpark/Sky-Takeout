@@ -94,6 +94,7 @@ public class EmployeeController {
      * @param employeeDTO
      * @return
      */
+
     @PostMapping
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = EmployeeSaveException.class)
     public Result save(@RequestBody EmployeeDTO employeeDTO)
@@ -196,6 +197,8 @@ public class EmployeeController {
                 .set(Employee::getName, employeeDTO.getName())
                 .set(Employee::getSex, employeeDTO.getSex())
                 .set(Employee::getPhone, employeeDTO.getPhone())
+                .set(Employee::getUpdateTime,LocalDateTime.now())
+                .set(Employee::getUpdateUser,BaseContext.getCurrentId())
                 .update();
         return Result.success();
     }

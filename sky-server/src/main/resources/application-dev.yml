@@ -1,4 +1,5 @@
 sky:
+  # 数据库连接配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
@@ -6,3 +7,10 @@ sky:
     database: sky_take_out
     username: root
     password: 123456
+# 阿里云OSS对象存储服务配置
+  alioss:
+    endpoint: oss-cn-shenzhen.aliyuncs.com
+    accessKeyId: LTAI5tHzX4fMjySKcCoCvYci
+    accessKeySecret: vPKhVa4Kux8jUP6fU4614CQ3FW0wiC
+    bucketName: cangqiongwaimaipbj
+

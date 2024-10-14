@@ -1,8 +1,6 @@
 package com.sky.controller.admin;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
@@ -13,6 +11,7 @@ import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
+import com.sky.enumeration.OperationType;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
@@ -60,6 +59,7 @@ public class CategoryController {
      * @param query
      * @return
      */
+
     @PutMapping
     @Transactional
     public Result update(@RequestBody CategoryDTO query)
@@ -69,6 +69,8 @@ public class CategoryController {
                 .eq(Category::getId,query.getId())
                 .set(Category::getName,query.getName())
                 .set(Category::getSort,query.getSort())
+                .set(Category::getUpdateTime,LocalDateTime.now())
+                .set(Category::getUpdateUser,BaseContext.getCurrentId())
                 .update();
         return Result.success();
     }
@@ -95,6 +97,7 @@ public class CategoryController {
      * @param categoryDTO
      * @return
      */
+
     @PostMapping
     @Transactional
     public Result save(@RequestBody CategoryDTO categoryDTO)
