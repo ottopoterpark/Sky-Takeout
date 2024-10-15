@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.sky.constant.MessageConstant;
+import com.sky.exception.BaseException;
 import com.sky.result.Result;
 import com.sky.utils.AliOssUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +33,16 @@ public class CommonController {
     @PostMapping("/upload")
     public Result<String> upload(MultipartFile file) throws IOException
     {
-        log.info("文件上传:{}",file);
-        String originalFilename = file.getOriginalFilename();
-        String extention = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String upload = aliOssUtil.upload(file.getBytes(), UUID.randomUUID().toString() + extention);
-        return Result.success(upload);
+        try
+        {
+            log.info("文件上传:{}",file);
+            String originalFilename = file.getOriginalFilename();
+            String extention = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String upload = aliOssUtil.upload(file.getBytes(), UUID.randomUUID().toString() + extention);
+            return Result.success(upload);
+        } catch (IOException e)
+        {
+            throw new BaseException(MessageConstant.UPLOAD_FAILED);
+        }
     }
 }
