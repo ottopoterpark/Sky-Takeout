@@ -35,41 +35,12 @@ public class DishController {
      * @return
      */
     @PostMapping
-    @Transactional
     public Result save(@RequestBody DishDTO dishDTO)
     {
         log.info("新增菜品:{}",dishDTO);
-
-        // 属性拷贝
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO,dish);
-
-        // 公共字段填充
-        dish.setCreateTime(LocalDateTime.now());
-        dish.setUpdateTime(LocalDateTime.now());
-        dish.setCreateUser(BaseContext.getCurrentId());
-        dish.setUpdateUser(BaseContext.getCurrentId());
-
-        try
-        {
-            // 保存菜品
-            dishService.save(dish);
-        } catch (Exception e)
-        {
-            throw new BaseException(MessageConstant.DISHNAME_DUPLICATE);
-        }
-
-        // 获取菜品口味和id
-        List<DishFlavor> flavors = dishDTO.getFlavors();
-        Long dishId = dish.getId();
-
-        // 填充菜品id字段
-        for (DishFlavor flavor : flavors)
-            flavor.setDishId(dishId);
-
-        // 保存菜品口味
-        Db.saveBatch(flavors);
-
+        dishService.saveDish(dish,dishDTO);
         return Result.success();
     }
 }

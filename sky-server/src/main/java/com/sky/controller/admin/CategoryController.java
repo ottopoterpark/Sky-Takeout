@@ -100,7 +100,6 @@ public class CategoryController {
     public Result save(@RequestBody Category category)
     {
         log.info("新增分类:{}",category);
-
         category.setStatus(StatusConstant.DISABLE);
 
         try
