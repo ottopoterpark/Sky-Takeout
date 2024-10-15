@@ -67,6 +67,10 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     @Override
     public PageResult pageQuery(DishPageQueryDTO query)
     {
+        // 避免分页参数进入条件查询中
+        if(query.getName()!=null||query.getCategoryId()!=null||query.getStatus()!=null)
+            query.setPage(1);
+
         Page<Dish> page = Page.of(query.getPage(), query.getPageSize());
 
         // 查询符合条件(名称，菜品分类，售卖状态)的Dish
@@ -76,6 +80,12 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
                 .eq(query.getStatus() != null, Dish::getStatus, query.getStatus())
                 .page(page);
         List<Dish> dishes = page.getRecords();
+
+        if(dishes==null||dishes.size()==0)
+            return PageResult.builder()
+                    .total(page.getTotal())
+                    .records(null)
+                    .build();
 
         // 获取这些Dish的categoryId的Set
         Set<Long> catogoryIds = dishes.stream().map(Dish::getCategoryId).collect(Collectors.toSet());

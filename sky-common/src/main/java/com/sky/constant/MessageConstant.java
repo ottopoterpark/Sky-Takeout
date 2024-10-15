@@ -1,5 +1,7 @@
 package com.sky.constant;
 
+import org.springframework.boot.convert.PeriodUnit;
+
 /**
  * 信息提示常量类
  */
@@ -17,6 +19,7 @@ public class MessageConstant {
     public static final String DISHNAME_DUPLICATE="菜品名已存在";
     public static final String CATEGORY_DUPLICATE="分类名已存在";
     public static final String ADDRESS_BOOK_IS_NULL = "用户地址为空，不能下单";
+    public static final String NO_DISHES= "当前条件下无菜品";
     public static final String LOGIN_FAILED = "登录失败";
     public static final String UPLOAD_FAILED = "文件上传失败";
     public static final String SETMEAL_ENABLE_FAILED = "套餐内包含未启售菜品，无法启售";

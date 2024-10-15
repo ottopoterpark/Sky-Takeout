@@ -2,6 +2,7 @@ package com.sky.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.google.gson.annotations.Expose;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.DishDTO;
@@ -60,5 +61,22 @@ public class DishController {
         log.info("菜品分页查询");
         PageResult pageResult = dishService.pageQuery(query);
         return Result.success(pageResult);
+    }
+
+    /**
+     * 菜品起售、停售
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result changeStatus(@PathVariable Integer status,Long id)
+    {
+        log.info("菜品起售、停售");
+        dishService.lambdaUpdate()
+                .eq(Dish::getId,id)
+                .set(Dish::getStatus,status)
+                .update();
+        return Result.success();
     }
 }
