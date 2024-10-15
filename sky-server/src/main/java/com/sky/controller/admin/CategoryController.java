@@ -4,14 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.annotation.AutoFill;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
-import com.sky.context.BaseContext;
-import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
+import com.sky.exception.BaseException;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
@@ -19,9 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import java.awt.desktop.QuitEvent;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -61,16 +58,16 @@ public class CategoryController {
      */
 
     @PutMapping
-    @Transactional
-    public Result update(@RequestBody CategoryDTO query)
+    @AutoFill(OperationType.UPDATE)
+    public Result update(@RequestBody Category category)
     {
-        log.info("修改分类:{}",query);
+        log.info("修改分类:{}",category);
         categoryService.lambdaUpdate()
-                .eq(Category::getId,query.getId())
-                .set(Category::getName,query.getName())
-                .set(Category::getSort,query.getSort())
-                .set(Category::getUpdateTime,LocalDateTime.now())
-                .set(Category::getUpdateUser,BaseContext.getCurrentId())
+                .eq(Category::getId,category.getId())
+                .set(Category::getName,category.getName())
+                .set(Category::getSort,category.getSort())
+                .set(Category::getUpdateTime,category.getUpdateTime())
+                .set(Category::getUpdateUser,category.getUpdateUser())
                 .update();
         return Result.success();
     }
@@ -99,21 +96,21 @@ public class CategoryController {
      */
 
     @PostMapping
-    @Transactional
-    public Result save(@RequestBody CategoryDTO categoryDTO)
+    @AutoFill(OperationType.INSERT)
+    public Result save(@RequestBody Category category)
     {
-        log.info("新增分类:{}",categoryDTO);
-        Category category = Category.builder()
-                .name(categoryDTO.getName())
-                .sort(categoryDTO.getSort())
-                .type(categoryDTO.getType())
-                .status(StatusConstant.DISABLE)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
-                .createUser(BaseContext.getCurrentId())
-                .updateUser(BaseContext.getCurrentId())
-                .build();
-        categoryService.save(category);
+        log.info("新增分类:{}",category);
+
+        category.setStatus(StatusConstant.DISABLE);
+
+        try
+        {
+            categoryService.save(category);
+        } catch (Exception e)
+        {
+            throw new BaseException(MessageConstant.CATEGORY_DUPLICATE);
+        }
+
         return Result.success();
     }
 

@@ -1,18 +1,18 @@
 package com.sky.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sky.annotation.AutoFill;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeEditPassword;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
+import com.sky.enumeration.OperationType;
 import com.sky.exception.BaseException;
-import com.sky.exception.EmployeeSaveException;
 import com.sky.properties.JwtProperties;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
@@ -20,14 +20,12 @@ import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,30 +93,22 @@ public class EmployeeController {
      * @return
      */
 
+    @AutoFill(OperationType.INSERT)
     @PostMapping
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = EmployeeSaveException.class)
-    public Result save(@RequestBody EmployeeDTO employeeDTO)
+    public Result save(@RequestBody Employee employee)
     {
-        log.info("新增员工:{}", employeeDTO);
-        Employee employeeJudge = employeeService.lambdaQuery().eq(Employee::getUsername, employeeDTO.getUsername()).one();
-        if (employeeJudge != null)
-            throw new EmployeeSaveException(MessageConstant.USERNAME_DUPLICATE);
+        log.info("新增员工:{}", employee);
 
-        //DTO转entity属性拷贝
-        Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO, employee);
-
-        //补充缺失的属性
         employee.setStatus(StatusConstant.ENABLE);
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-        // 获取当前登录用户的id
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
 
-        //新增员工
-        employeeService.save(employee);
+        try
+        {
+            employeeService.save(employee);
+        } catch (Exception e)
+        {
+            throw new BaseException(MessageConstant.USERNAME_DUPLICATE);
+        }
 
         return Result.success();
     }
@@ -186,19 +176,19 @@ public class EmployeeController {
      * @return
      */
     @PutMapping
-    @Transactional
-    public Result update(@RequestBody EmployeeDTO employeeDTO)
+    @AutoFill(OperationType.UPDATE)
+    public Result update(@RequestBody Employee employee)
     {
-        log.info("修改员工信息:{}", employeeDTO);
+        log.info("修改员工信息:{}", employee);
         employeeService.lambdaUpdate()
-                .eq(Employee::getId, employeeDTO.getId())
-                .set(Employee::getIdNumber, employeeDTO.getIdNumber())
-                .set(Employee::getUsername, employeeDTO.getUsername())
-                .set(Employee::getName, employeeDTO.getName())
-                .set(Employee::getSex, employeeDTO.getSex())
-                .set(Employee::getPhone, employeeDTO.getPhone())
-                .set(Employee::getUpdateTime,LocalDateTime.now())
-                .set(Employee::getUpdateUser,BaseContext.getCurrentId())
+                .eq(Employee::getId, employee.getId())
+                .set(Employee::getIdNumber, employee.getIdNumber())
+                .set(Employee::getUsername, employee.getUsername())
+                .set(Employee::getName, employee.getName())
+                .set(Employee::getSex, employee.getSex())
+                .set(Employee::getPhone, employee.getPhone())
+                .set(Employee::getUpdateUser,employee.getUpdateUser())
+                .set(Employee::getUpdateTime,employee.getUpdateTime())
                 .update();
         return Result.success();
     }

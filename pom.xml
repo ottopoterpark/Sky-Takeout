@@ -27,10 +27,10 @@
         <commons.lang>2.6</commons.lang>
         <druid>1.2.1</druid>
         <aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
-        <aspectj>1.9.4</aspectj>
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <poi>3.16</poi>
+        <aop>3.3.4</aop>
     </properties>
 <!--    依赖控制-->
     <dependencyManagement>
@@ -67,15 +67,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjrt</artifactId>
-                <version>${aspectj}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjweaver</artifactId>
-                <version>${aspectj}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-aop</artifactId>
+                <version>${aop}</version>
             </dependency>
 
             <dependency>
