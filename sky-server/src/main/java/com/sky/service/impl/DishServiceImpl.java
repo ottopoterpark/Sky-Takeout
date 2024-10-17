@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
@@ -15,12 +16,14 @@ import com.sky.enumeration.OperationType;
 import com.sky.exception.BaseException;
 import com.sky.mapper.DishMapper;
 import com.sky.result.PageResult;
+import com.sky.service.DishFlavorService;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +31,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements DishService {
+
+    private final DishFlavorService dishFlavorService;
 
     /**
      * 新增菜品
@@ -113,5 +119,58 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
                 .total(page.getTotal())
                 .records(dishVOS)
                 .build();
+    }
+
+    /**
+     * 根据id查询菜品
+     * @param id
+     * @return
+     */
+    @Override
+    public DishVO getDishById(Long id)
+    {
+        Dish dish = lambdaQuery().eq(Dish::getId, id).one();
+        DishVO dishVO = new DishVO();
+        BeanUtils.copyProperties(dish,dishVO);
+        Category category = Db.lambdaQuery(Category.class).eq(Category::getId, dish.getCategoryId()).one();
+        List<DishFlavor> dishFlavors = Db.lambdaQuery(DishFlavor.class).eq(DishFlavor::getDishId, dish.getId()).list();
+        dishVO.setCategoryName(category.getName());
+        dishVO.setFlavors(dishFlavors);
+        return dishVO;
+    }
+
+    /**
+     * 修改菜品
+     * @param dish
+     * @param flavors
+     */
+    @Override
+    @AutoFill(OperationType.UPDATE)
+    @Transactional
+    public void updateWithFlavor(Dish dish, List<DishFlavor> flavors)
+    {
+        // 更新菜品信息
+        lambdaUpdate()
+                .eq(Dish::getId,dish.getId())
+                .set(dish.getName()!=null,Dish::getName,dish.getName())
+                .set(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId())
+                .set(dish.getPrice()!=null,Dish::getPrice,dish.getPrice())
+                .set(dish.getImage()!=null,Dish::getImage,dish.getImage())
+                .set(dish.getDescription()!=null,Dish::getDescription,dish.getDescription())
+                .set(dish.getStatus()!=null,Dish::getStatus,dish.getStatus())
+                .set(dish.getUpdateTime()!=null,Dish::getUpdateTime,dish.getUpdateTime())
+                .set(dish.getUpdateUser()!=null,Dish::getUpdateUser,dish.getUpdateUser())
+                .update();
+
+        // 删除该菜品关联的所有口味
+        LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().eq(DishFlavor::getDishId, dish.getId());
+        dishFlavorService.remove(wrapper);
+
+        // 将口味列表重新插入口味表
+        for (DishFlavor flavor : flavors)
+        {
+            flavor.setDishId(dish.getId());
+        }
+        dishFlavorService.saveBatch(flavors);
     }
 }

@@ -53,7 +53,7 @@ public class CategoryController {
 
     /**
      * 修改分类
-     * @param query
+     * @param category
      * @return
      */
 
@@ -91,7 +91,7 @@ public class CategoryController {
 
     /**
      * 新增分类
-     * @param categoryDTO
+     * @param category
      * @return
      */
 

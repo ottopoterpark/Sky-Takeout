@@ -1,16 +1,9 @@
 package com.sky.controller.admin;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.toolkit.Db;
-import com.google.gson.annotations.Expose;
-import com.sky.constant.MessageConstant;
-import com.sky.context.BaseContext;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
-import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
-import com.sky.exception.BaseException;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
@@ -20,12 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -58,7 +46,7 @@ public class DishController {
     @GetMapping("/page")
     public Result<PageResult> page(DishPageQueryDTO query)
     {
-        log.info("菜品分页查询");
+        log.info("菜品分页查询:{}",query);
         PageResult pageResult = dishService.pageQuery(query);
         return Result.success(pageResult);
     }
@@ -72,11 +60,53 @@ public class DishController {
     @PostMapping("/status/{status}")
     public Result changeStatus(@PathVariable Integer status,Long id)
     {
-        log.info("菜品起售、停售");
+        log.info("菜品起售、停售:{} {}",status,id);
         dishService.lambdaUpdate()
                 .eq(Dish::getId,id)
                 .set(Dish::getStatus,status)
                 .update();
+        return Result.success();
+    }
+
+    /**
+     * 根据id查询菜品
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<DishVO> getById(@PathVariable Long id)
+    {
+        log.info("根据id查询菜品:{}",id);
+        DishVO data=dishService.getDishById(id);
+        return Result.success(data);
+    }
+
+    /**
+     * 根据分类id查询菜品
+     * @param categoryId
+     * @return
+     */
+    @GetMapping("/list")
+    public Result<List<Dish>> listById(Long categoryId)
+    {
+        log.info("根据分类id查询菜品:{}",categoryId);
+        List<Dish> dishes = dishService.lambdaQuery().eq(Dish::getCategoryId, categoryId).list();
+        return Result.success(dishes);
+    }
+
+    /**
+     * 修改菜品
+     * @param dishDTO
+     * @return
+     */
+    @PutMapping
+    public Result update(@RequestBody DishDTO dishDTO)
+    {
+        log.info("修改菜品:{}",dishDTO);
+        Dish dish = new Dish();
+        BeanUtils.copyProperties(dishDTO,dish);
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        dishService.updateWithFlavor(dish,flavors);
         return Result.success();
     }
 }
