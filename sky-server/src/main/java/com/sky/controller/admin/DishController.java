@@ -1,5 +1,7 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -11,6 +13,7 @@ import com.sky.vo.DishVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -107,6 +110,19 @@ public class DishController {
         BeanUtils.copyProperties(dishDTO,dish);
         List<DishFlavor> flavors = dishDTO.getFlavors();
         dishService.updateWithFlavor(dish,flavors);
+        return Result.success();
+    }
+
+    /**
+     * 批量删除菜品
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    public Result delete(@RequestParam List<Long> ids)
+    {
+        log.info("批量删除菜品:{}",ids);
+        dishService.removeBatchWithFlavorsByIds(ids);
         return Result.success();
     }
 }
