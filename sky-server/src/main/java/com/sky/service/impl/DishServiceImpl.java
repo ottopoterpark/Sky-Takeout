@@ -21,6 +21,7 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +32,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements DishService {
 
-    private final DishFlavorService dishFlavorService;
+    @Autowired
+    private  DishFlavorService dishFlavorService;
 
     /**
      * 新增菜品
@@ -185,5 +186,40 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         removeBatchByIds(ids);
         LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().in(DishFlavor::getDishId, ids);
         dishFlavorService.remove(wrapper);
+    }
+
+    /**
+     * 根据分类id查询菜品
+     * @param categoryId
+     * @return
+     */
+    @Override
+    public List<DishVO> listWithCategoryNameAndFlavors(Long categoryId)
+    {
+        // 根据分类id查询菜品
+        List<Dish> dishes = lambdaQuery().eq(Dish::getCategoryId, categoryId).list();
+
+        // 根据分类id查询分类名称
+        Category category = Db.lambdaQuery(Category.class).eq(Category::getId, categoryId).one();
+        String categoryName = category.getName();
+
+        // 根据菜品ids查询对应的口味
+        Set<Long> dishIds = dishes.stream().map(Dish::getId).collect(Collectors.toSet());
+        Map<Long, List<DishFlavor>> dishFlavors = Db.lambdaQuery(DishFlavor.class).in(DishFlavor::getDishId, dishIds).list()
+                .stream().collect(Collectors.groupingBy(DishFlavor::getDishId));
+
+        // 封装结果
+        List<DishVO> dishVOS = new ArrayList<>();
+        for (Dish dish : dishes)
+        {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(dish,dishVO);
+            dishVO.setCategoryName(categoryName);
+            dishVO.setFlavors(dishFlavors.get(dish.getId()));
+            dishVOS.add(dishVO);
+        }
+
+        // 返回结果
+        return dishVOS;
     }
 }
