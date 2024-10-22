@@ -10,15 +10,18 @@
     </parent>
     <groupId>com.sky</groupId>
     <artifactId>sky-take-out</artifactId>
+
 <!--    父工程打包方式为pom-->
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
 <!--    聚合所有子工程-->
     <modules>
         <module>sky-common</module>
         <module>sky-pojo</module>
         <module>sky-server</module>
     </modules>
+
 <!--    版本控制-->
     <properties>
         <mybatis-plus>3.5.3.1</mybatis-plus>
@@ -32,7 +35,9 @@
         <poi>3.16</poi>
         <aop>3.3.4</aop>
         <redis>2.7.3</redis>
+        <httpclent>4.5.14</httpclent>
     </properties>
+
 <!--    依赖控制-->
     <dependencyManagement>
         <dependencies>
@@ -103,17 +108,27 @@
                 <artifactId>poi</artifactId>
                 <version>${poi}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi}</version>
             </dependency>
+
             <!--微信支付-->
             <dependency>
                 <groupId>com.github.wechatpay-apiv3</groupId>
                 <artifactId>wechatpay-apache-httpclient</artifactId>
                 <version>0.4.8</version>
             </dependency>
+
+            <!-- 客户端编程工具包-->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclent}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 </project>

@@ -27,6 +27,12 @@ mybatis:
     #开启驼峰命名
     map-underscore-to-camel-case: true
 
+# 全局配置主键自增
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: auto
+
 
 logging:
   level:
@@ -37,16 +43,27 @@ logging:
         controller: info
 
 sky:
+#  jwt令牌设置
   jwt:
-    # 设置jwt签名加密时使用的秘钥
+    # 管理端设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
-    # 设置jwt过期时间
+    # 管理端设置jwt过期时间
     admin-ttl: 72000000
-    # 设置前端传递过来的令牌名称
+    # 管理端设置前端传递过来的令牌名称
     admin-token-name: token
+    # 用户端设置jwt签名加密使用的密钥
+    user-secret-key: itheima
+    # 用户端设置jwt过期时间
+    user-ttl: 72000000
+    # 用户端设置前端传递过来的令牌名称
+    user-token-name: authentication
+  # 阿里云OSS对象存储服务
   alioss:
-    # 阿里云OSS对象存储服务
     endpoint: ${sky.alioss.endpoint}
     access-key-id: ${sky.alioss.access-key-id}
     access-key-secret: ${sky.alioss.access-key-secret}
     bucket-name: ${sky.alioss.bucket-name}
+#  微信小程序
+  wechat:
+    appid: ${sky.wechat.appid}
+    secret: ${sky.wechat.secret}
