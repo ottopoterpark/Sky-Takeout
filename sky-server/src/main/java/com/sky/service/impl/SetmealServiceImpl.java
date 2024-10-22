@@ -143,4 +143,20 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
         // 重新将前端传入的菜品与该套餐关联
         setmealDishService.saveBatch(setmealDishes);
     }
+
+    /**
+     * 批量删除套餐
+     * @param ids
+     */
+    @Override
+    @Transactional
+    public void delete(List<Long> ids)
+    {
+        // 删除当前套餐
+        removeBatchByIds(ids);
+
+        // 删除套餐菜品关联表中该套餐关联的菜品
+        LambdaQueryWrapper<SetmealDish> wrapper = new LambdaQueryWrapper<SetmealDish>().in(SetmealDish::getSetmealId, ids);
+        setmealDishService.remove(wrapper);
+    }
 }

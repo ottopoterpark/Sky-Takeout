@@ -96,4 +96,17 @@ public class SetmealController {
         setmealService.update(setmeal,setmealDishes);
         return Result.success();
     }
+
+    /**
+     * 批量删除套餐
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    public Result delete(@RequestParam List<Long> ids)
+    {
+        log.info("批量删除套餐:{}",ids);
+        setmealService.delete(ids);
+        return Result.success();
+    }
 }

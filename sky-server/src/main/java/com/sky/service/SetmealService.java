@@ -17,4 +17,6 @@ public interface SetmealService extends IService<Setmeal> {
     SetmealVO get(Long id);
 
     void update(Setmeal setmeal, List<SetmealDish> setmealDishes);
+
+    void delete(List<Long> ids);
 }

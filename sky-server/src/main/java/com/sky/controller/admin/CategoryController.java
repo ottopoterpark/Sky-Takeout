@@ -10,6 +10,7 @@ import com.sky.constant.StatusConstant;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
+import com.sky.entity.Setmeal;
 import com.sky.enumeration.OperationType;
 import com.sky.exception.BaseException;
 import com.sky.result.PageResult;
@@ -148,11 +149,16 @@ public class CategoryController {
     public Result delete(Long id)
     {
         log.info("根据id删除分类:{}",id);
-        List<Dish> list = Db.lambdaQuery(Dish.class)
+        List<Dish> dishes = Db.lambdaQuery(Dish.class)
                 .eq(Dish::getCategoryId, id)
                 .list();
-        if(list.size()!=0)
+        List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class)
+                .eq(Setmeal::getCategoryId, id)
+                .list();
+        if(dishes.size()!=0)
             return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
+        if(setmeals.size()!=0)
+            return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
         categoryService.remove(new LambdaQueryWrapper<Category>().eq(Category::getId, id));
         return Result.success();
     }
