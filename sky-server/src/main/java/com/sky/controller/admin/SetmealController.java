@@ -7,6 +7,7 @@ import com.sky.entity.SetmealDish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.SetmealService;
+import com.sky.vo.SetmealVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,5 +66,18 @@ public class SetmealController {
                 .set(Setmeal::getStatus,status)
                 .update();
         return Result.success();
+    }
+
+    /**
+     * 根据id查询套餐
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<SetmealVO> get(@PathVariable Long id)
+    {
+        log.info("根据id查询套餐:{}",id);
+        SetmealVO setmealVOS=setmealService.get(id);
+        return Result.success(setmealVOS);
     }
 }

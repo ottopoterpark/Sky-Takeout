@@ -94,4 +94,22 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
                 .records(setmealVOS)
                 .build();
     }
+
+    /**
+     * 根据id查询套餐
+     * @param id
+     * @return
+     */
+    @Override
+    public SetmealVO get(Long id)
+    {
+        Setmeal setmeal = lambdaQuery().eq(Setmeal::getId, id).one();
+        Category category = Db.lambdaQuery(Category.class).eq(Category::getId, setmeal.getCategoryId()).one();
+        List<SetmealDish> setmealDishes = Db.lambdaQuery(SetmealDish.class).eq(SetmealDish::getSetmealId, setmeal.getId()).list();
+        SetmealVO setmealVO = new SetmealVO();
+        BeanUtils.copyProperties(setmeal, setmealVO);
+        setmealVO.setCategoryName(category.getName());
+        setmealVO.setSetmealDishes(setmealDishes);
+        return setmealVO;
+    }
 }
