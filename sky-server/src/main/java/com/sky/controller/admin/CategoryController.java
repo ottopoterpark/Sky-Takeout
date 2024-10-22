@@ -38,12 +38,22 @@ public class CategoryController {
     public Result<PageResult> page(CategoryPageQueryDTO query)
     {
         log.info("分类分页查询:{}",query);
+
+        // 避免分页参数进入条件查询
+        if(query.getName()!=null||query.getType()!=null)
+            query.setPage(1);
+
         Page<Category> p = Page.of(query.getPage(), query.getPageSize());
         p.addOrder(OrderItem.asc("sort"));
         p=categoryService.lambdaQuery()
                 .like(query.getName()!=null, Category::getName,query.getName())
                 .eq(query.getType()!=null, Category::getType,query.getType())
                 .page(p);
+
+        // 如果查询结果为空
+        if(p.getRecords()==null||p.getRecords().size()==0)
+            return Result.success(PageResult.builder().total(0).records(null).build());
+
         PageResult data = PageResult.builder()
                 .total(p.getTotal())
                 .records(p.getRecords())

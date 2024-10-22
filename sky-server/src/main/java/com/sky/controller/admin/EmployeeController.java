@@ -123,17 +123,29 @@ public class EmployeeController {
     public Result<PageResult> page(EmployeePageQueryDTO query)
     {
         log.info("分页查询:{}", query);
+
+        // 避免分页条件进入条件查询
+        if(query.getName()!=null)
+            query.setPage(1);
+
         //分页查询条件
         Page<Employee> p = Page.of(query.getPage(), query.getPageSize());
         p = employeeService.lambdaQuery()
                 .like(query.getName() != null, Employee::getName, query.getName())
                 .page(p);
+
+        // 如果查询结果为空
+        if(p.getRecords()==null||p.getRecords().size()==0)
+            return Result.success(PageResult.builder().total(0).records(null).build());
+
         //封装查询结果
-        PageResult pageResult = new PageResult();
-        pageResult.setTotal(p.getTotal());
-        pageResult.setRecords(p.getRecords());
+        PageResult data = PageResult.builder()
+                .total(p.getTotal())
+                .records(p.getRecords())
+                .build();
+
         //返回结果
-        return Result.success(pageResult);
+        return Result.success(data);
     }
 
     /**
