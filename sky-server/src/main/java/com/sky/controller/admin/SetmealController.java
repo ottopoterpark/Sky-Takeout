@@ -50,4 +50,20 @@ public class SetmealController {
         PageResult data=setmealService.pageWithCategoryName(setmealPageQueryDTO);
         return Result.success(data);
     }
+
+    /**
+     * 套餐状态修改
+     * @param status
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result status(@PathVariable Integer status,Long id)
+    {
+        log.info("套餐状态修改:{}",status);
+        setmealService.lambdaUpdate()
+                .eq(Setmeal::getId,id)
+                .set(Setmeal::getStatus,status)
+                .update();
+        return Result.success();
+    }
 }

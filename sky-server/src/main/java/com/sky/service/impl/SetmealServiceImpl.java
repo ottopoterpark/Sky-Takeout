@@ -38,6 +38,8 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
     @AutoFill(OperationType.INSERT)
     public void save(Setmeal setmeal, List<SetmealDish> setmealDishes)
     {
+        // 默认新增套餐是停售的
+        setmeal.setStatus(0);
         save(setmeal);
         setmealDishes.stream().forEach(s -> s.setSetmealId(setmeal.getId()));
         Db.saveBatch(setmealDishes);
