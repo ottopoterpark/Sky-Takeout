@@ -155,6 +155,8 @@ public class CategoryController {
         List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class)
                 .eq(Setmeal::getCategoryId, id)
                 .list();
+
+        // 如果分类关联了菜品或套餐，则不能删除
         if(dishes.size()!=0)
             return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
         if(setmeals.size()!=0)
