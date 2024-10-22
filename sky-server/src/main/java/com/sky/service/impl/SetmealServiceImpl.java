@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
@@ -11,6 +12,7 @@ import com.sky.entity.SetmealDish;
 import com.sky.enumeration.OperationType;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
+import com.sky.service.SetmealDishService;
 import com.sky.service.SetmealService;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
@@ -26,6 +28,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> implements SetmealService {
+
+    @Autowired
+    private SetmealDishService setmealDishService;
 
     /**
      * 新增套餐
@@ -111,5 +116,31 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
         setmealVO.setCategoryName(category.getName());
         setmealVO.setSetmealDishes(setmealDishes);
         return setmealVO;
+    }
+
+    /**
+     * 修改套餐
+     * @param setmeal
+     * @param setmealDishes
+     */
+    @Override
+    @Transactional
+    @AutoFill(OperationType.UPDATE)
+    public void update(Setmeal setmeal, List<SetmealDish> setmealDishes)
+    {
+        // 更新套餐信息
+        lambdaUpdate()
+                .eq(Setmeal::getId, setmeal.getId())
+                .update(setmeal);
+
+        // 删除与该套餐所有相关的菜品
+        LambdaQueryWrapper<SetmealDish> wrapper = new LambdaQueryWrapper<SetmealDish>().eq(SetmealDish::getSetmealId, setmeal.getId());
+        setmealDishService.remove(wrapper);
+
+        // 为前端传入的所有菜品添加setmealId
+        setmealDishes.stream().forEach(s->s.setSetmealId(setmeal.getId()));
+
+        // 重新将前端传入的菜品与该套餐关联
+        setmealDishService.saveBatch(setmealDishes);
     }
 }

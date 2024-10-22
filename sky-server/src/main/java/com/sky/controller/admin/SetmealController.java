@@ -80,4 +80,20 @@ public class SetmealController {
         SetmealVO setmealVOS=setmealService.get(id);
         return Result.success(setmealVOS);
     }
+
+    /**
+     * 修改套餐
+     * @param setmealDTO
+     * @return
+     */
+    @PutMapping
+    public Result update(@RequestBody SetmealDTO setmealDTO)
+    {
+        log.info("修改套餐:{}",setmealDTO);
+        Setmeal setmeal = new Setmeal();
+        BeanUtils.copyProperties(setmealDTO, setmeal);
+        List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
+        setmealService.update(setmeal,setmealDishes);
+        return Result.success();
+    }
 }

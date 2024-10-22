@@ -15,4 +15,6 @@ public interface SetmealService extends IService<Setmeal> {
     PageResult pageWithCategoryName(SetmealPageQueryDTO setmealPageQueryDTO);
 
     SetmealVO get(Long id);
+
+    void update(Setmeal setmeal, List<SetmealDish> setmealDishes);
 }
