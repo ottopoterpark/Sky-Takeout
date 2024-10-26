@@ -1,5 +1,6 @@
 package com.sky.controller.user;
 
+import com.sky.constant.StatusConstant;
 import com.sky.entity.Category;
 import com.sky.result.Result;
 import com.sky.service.CategoryService;
@@ -30,7 +31,10 @@ public class CategoryController {
     @GetMapping("/list")
     public Result<List<Category>> list(Integer type)
     {
-        List<Category> categories = categoryService.lambdaQuery().eq(type != null, Category::getType, type).list();
+        List<Category> categories = categoryService.lambdaQuery()
+                .eq(type != null, Category::getType, type)
+                .eq(Category::getStatus, StatusConstant.ENABLE)
+                .list();
         return Result.success(categories);
     }
 }

@@ -89,7 +89,7 @@ public class EmployeeController {
     /**
      * 新增员工
      *
-     * @param employeeDTO
+     * @param
      * @return
      */
 
@@ -133,10 +133,6 @@ public class EmployeeController {
         p = employeeService.lambdaQuery()
                 .like(query.getName() != null, Employee::getName, query.getName())
                 .page(p);
-
-        // 如果查询结果为空
-        if(p.getRecords()==null||p.getRecords().size()==0)
-            return Result.success(PageResult.builder().total(0).records(null).build());
 
         //封装查询结果
         PageResult data = PageResult.builder()
@@ -184,7 +180,7 @@ public class EmployeeController {
     /**
      * 修改员工信息
      *
-     * @param employeeDTO
+     * @param employee
      * @return
      */
     @PutMapping

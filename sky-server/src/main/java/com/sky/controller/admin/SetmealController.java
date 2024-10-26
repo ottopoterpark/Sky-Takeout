@@ -1,7 +1,11 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.constant.MessageConstant;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
+import com.sky.entity.Dish;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
 import com.sky.result.PageResult;
@@ -14,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController("adminSetmealController")
 @RequestMapping("/admin/setmeal")
@@ -61,6 +67,20 @@ public class SetmealController {
     public Result status(@PathVariable Integer status,Long id)
     {
         log.info("套餐状态修改:{}",status);
+
+        // 查询套餐关联的菜品
+        Set<Long> dishIds = Db.lambdaQuery(SetmealDish.class).eq(SetmealDish::getSetmealId, id).list()
+                .stream().map(SetmealDish::getDishId).collect(Collectors.toSet());
+
+        // 查询关联菜品的销售状态
+        Set<Integer> dishStatus = Db.lambdaQuery(Dish.class).in(Dish::getId, dishIds).list()
+                .stream().map(Dish::getStatus).collect(Collectors.toSet());
+
+        // 如果包含未起售菜品，则该套餐无法起售
+        if (dishStatus.contains(StatusConstant.DISABLE))
+            return Result.error(MessageConstant.SETMEAL_ENABLE_FAILED);
+
+        // 更新套餐状态
         setmealService.lambdaUpdate()
                 .eq(Setmeal::getId,id)
                 .set(Setmeal::getStatus,status)
@@ -106,6 +126,15 @@ public class SetmealController {
     public Result delete(@RequestParam List<Long> ids)
     {
         log.info("批量删除套餐:{}",ids);
+
+        // 查询套餐的销售状态
+        Set<Integer> setmealStatus = setmealService.lambdaQuery().in(Setmeal::getId, ids).list()
+                .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
+
+        // 如果套餐启售中无法删除
+        if(setmealStatus.contains(StatusConstant.ENABLE))
+            return Result.error(MessageConstant.SETMEAL_ON_SALE);
+
         setmealService.delete(ids);
         return Result.success();
     }

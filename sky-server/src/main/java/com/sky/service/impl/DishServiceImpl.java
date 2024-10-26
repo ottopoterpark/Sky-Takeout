@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.sky.annotation.AutoFill;
 import com.sky.constant.MessageConstant;
-import com.sky.context.BaseContext;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Category;
@@ -16,12 +16,13 @@ import com.sky.enumeration.OperationType;
 import com.sky.exception.BaseException;
 import com.sky.mapper.DishMapper;
 import com.sky.result.PageResult;
+import com.sky.result.Result;
 import com.sky.service.DishFlavorService;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Autowired
     private  DishFlavorService dishFlavorService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -88,11 +92,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
                 .page(page);
         List<Dish> dishes = page.getRecords();
 
-        if(dishes==null||dishes.size()==0)
-            return PageResult.builder()
-                    .total(page.getTotal())
-                    .records(null)
-                    .build();
+        // 如果查询结果为空，直接返回
+        if(dishes.isEmpty())
+            return PageResult.builder().total(page.getTotal()).records(page.getRecords()).build();
 
         // 获取这些Dish的categoryId的Set
         Set<Long> catogoryIds = dishes.stream().map(Dish::getCategoryId).collect(Collectors.toSet());
@@ -176,19 +178,6 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     }
 
     /**
-     * 批量删除菜品
-     * @param ids
-     */
-    @Override
-    @Transactional
-    public void removeBatchWithFlavorsByIds(List<Long> ids)
-    {
-        removeBatchByIds(ids);
-        LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().in(DishFlavor::getDishId, ids);
-        dishFlavorService.remove(wrapper);
-    }
-
-    /**
      * 根据分类id查询菜品
      * @param categoryId
      * @return
@@ -196,8 +185,18 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     @Override
     public List<DishVO> listWithCategoryNameAndFlavors(Long categoryId)
     {
+        // 查询redis中是否存在分类展示数据
+        String key="category_"+categoryId;
+        List<DishVO> dishVOS=(List<DishVO>) redisTemplate.opsForValue().get(key);
+
+        // 存在则直接返回结果
+        if(dishVOS!=null)
+            return dishVOS;
+
         // 根据分类id查询菜品
-        List<Dish> dishes = lambdaQuery().eq(Dish::getCategoryId, categoryId).list();
+        List<Dish> dishes = lambdaQuery()
+                .eq(Dish::getCategoryId, categoryId)
+                .list();
 
         // 根据分类id查询分类名称
         Category category = Db.lambdaQuery(Category.class).eq(Category::getId, categoryId).one();
@@ -205,11 +204,12 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
         // 根据菜品ids查询对应的口味
         Set<Long> dishIds = dishes.stream().map(Dish::getId).collect(Collectors.toSet());
-        Map<Long, List<DishFlavor>> dishFlavors = Db.lambdaQuery(DishFlavor.class).in(DishFlavor::getDishId, dishIds).list()
+        Map<Long, List<DishFlavor>> dishFlavors = Db.lambdaQuery(DishFlavor.class)
+                .in(dishIds!=null&&dishIds.size()>0,DishFlavor::getDishId, dishIds).list()
                 .stream().collect(Collectors.groupingBy(DishFlavor::getDishId));
 
         // 封装结果
-        List<DishVO> dishVOS = new ArrayList<>();
+        dishVOS = new ArrayList<>();
         for (Dish dish : dishes)
         {
             DishVO dishVO = new DishVO();
@@ -218,6 +218,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             dishVO.setFlavors(dishFlavors.get(dish.getId()));
             dishVOS.add(dishVO);
         }
+
+        // 存入redis
+        redisTemplate.opsForValue().set(key,dishVOS);
 
         // 返回结果
         return dishVOS;

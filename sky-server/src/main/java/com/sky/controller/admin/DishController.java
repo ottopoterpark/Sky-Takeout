@@ -1,27 +1,43 @@
 package com.sky.controller.admin;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.constant.MessageConstant;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.entity.Setmeal;
+import com.sky.entity.SetmealDish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
+import com.sky.service.DishFlavorService;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController("adminDishController")
 @RequestMapping("/admin/dish")
 @Slf4j
-@RequiredArgsConstructor
 public class DishController {
 
-    private final DishService dishService;
+    @Autowired
+    private DishService dishService;
+
+    @Autowired
+    private DishFlavorService dishFlavorService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -35,6 +51,7 @@ public class DishController {
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO,dish);
         dishService.saveDish(dish,dishDTO);
+
         return Result.success();
     }
 
@@ -61,9 +78,33 @@ public class DishController {
     public Result changeStatus(@PathVariable Integer status,Long id)
     {
         log.info("菜品起售、停售:{} {}",status,id);
+
+        // 如果要将菜品起售，直接修改状态
+        if(status.equals(StatusConstant.ENABLE))
+        {
+            dishService.lambdaUpdate()
+                    .eq(Dish::getId, id)
+                    .set(Dish::getStatus, status)
+                    .update();
+            return Result.success();
+        }
+
+        // 查询菜品关联的套餐
+        Set<Long> setmealIds = Db.lambdaQuery(SetmealDish.class).eq(SetmealDish::getDishId, id).list()
+                .stream().map(SetmealDish::getSetmealId).collect(Collectors.toSet());
+
+        // 查询这些套餐的销售状态
+        Set<Integer> setmealStatus = Db.lambdaQuery(Setmeal.class).in(Setmeal::getId, setmealIds).list()
+                .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
+
+        // 如果关联套餐已经起售，则无法将菜品状态设为停售
+        if(setmealStatus.contains(StatusConstant.ENABLE))
+            return Result.error(MessageConstant.DISH_DISABLE_FAILED);
+
+        // 修改菜品状态
         dishService.lambdaUpdate()
-                .eq(Dish::getId,id)
-                .set(Dish::getStatus,status)
+                .eq(Dish::getId, id)
+                .set(Dish::getStatus, status)
                 .update();
         return Result.success();
     }
@@ -119,7 +160,26 @@ public class DishController {
     public Result delete(@RequestParam List<Long> ids)
     {
         log.info("批量删除菜品:{}",ids);
-        dishService.removeBatchWithFlavorsByIds(ids);
+
+        // 查询ids关联的套餐
+        List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class).in(Setmeal::getCategoryId, ids).list();
+
+        // 如果菜品关联了菜品，则无法删除
+        if (setmeals.isEmpty())
+            return Result.error(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
+
+        // 查询菜品的销售状态
+        Set<Integer> status = dishService.lambdaQuery().in(Dish::getId, ids).list().stream().map(Dish::getStatus).collect(Collectors.toSet());
+
+        // 如果菜品有起售的无法删除
+        if(status.contains(StatusConstant.ENABLE))
+            return Result.error(MessageConstant.DISH_ON_SALE);
+
+        // 删除菜品和关联口味
+        dishService.removeBatchByIds(ids);
+        LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().in(DishFlavor::getDishId, ids);
+        dishFlavorService.remove(wrapper);
+
         return Result.success();
     }
 }

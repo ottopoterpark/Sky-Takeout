@@ -44,6 +44,7 @@ public class CategoryController {
         if(query.getName()!=null||query.getType()!=null)
             query.setPage(1);
 
+        // 条件分页查询
         Page<Category> p = Page.of(query.getPage(), query.getPageSize());
         p.addOrder(OrderItem.asc("sort"));
         p=categoryService.lambdaQuery()
@@ -51,10 +52,7 @@ public class CategoryController {
                 .eq(query.getType()!=null, Category::getType,query.getType())
                 .page(p);
 
-        // 如果查询结果为空
-        if(p.getRecords()==null||p.getRecords().size()==0)
-            return Result.success(PageResult.builder().total(0).records(null).build());
-
+        // 封装查询结果
         PageResult data = PageResult.builder()
                 .total(p.getTotal())
                 .records(p.getRecords())
@@ -149,6 +147,8 @@ public class CategoryController {
     public Result delete(Long id)
     {
         log.info("根据id删除分类:{}",id);
+
+        // 查询分类关联的菜品和套餐
         List<Dish> dishes = Db.lambdaQuery(Dish.class)
                 .eq(Dish::getCategoryId, id)
                 .list();
@@ -157,10 +157,12 @@ public class CategoryController {
                 .list();
 
         // 如果分类关联了菜品或套餐，则不能删除
-        if(dishes.size()!=0)
+        if(!dishes.isEmpty())
             return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
-        if(setmeals.size()!=0)
+        if(!setmeals.isEmpty())
             return Result.error(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
+
+        // 删除分类
         categoryService.remove(new LambdaQueryWrapper<Category>().eq(Category::getId, id));
         return Result.success();
     }

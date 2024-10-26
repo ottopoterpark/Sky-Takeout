@@ -73,8 +73,8 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
         List<Setmeal> setmeals = page.getRecords();
 
         // 如果结果为空直接返回
-        if(setmeals==null||setmeals.size()==0)
-            return PageResult.builder().total(0).records(null).build();
+        if(setmeals.isEmpty())
+            return PageResult.builder().total(page.getTotal()).records(page.getRecords()).build();
 
         // 获得套餐对应分类的ids
         Set<Long> categoryIds = setmeals.stream().map(Setmeal::getCategoryId).collect(Collectors.toSet());
