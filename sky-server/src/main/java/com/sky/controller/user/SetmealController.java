@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -60,6 +61,7 @@ public class SetmealController {
      * @return
      */
     @GetMapping("/dish/{id}")
+    @Cacheable(cacheNames = "setmeal",key = "#id")
     public Result<List<DishItemVO>> dish(@PathVariable Long id)
     {
         log.info("根据套餐id查询菜品:{}", id);

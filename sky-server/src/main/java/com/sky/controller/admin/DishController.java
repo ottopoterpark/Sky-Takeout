@@ -43,29 +43,31 @@ public class DishController {
 
     /**
      * 新增菜品
+     *
      * @param dishDTO
      * @return
      */
     @PostMapping
-    @CacheEvict(cacheNames = "category",key = "#dishDTO.getCategoryId()")
+    @CacheEvict(cacheNames = "category", key = "#dishDTO.getCategoryId()")
     public Result save(@RequestBody DishDTO dishDTO)
     {
-        log.info("新增菜品:{}",dishDTO);
+        log.info("新增菜品:{}", dishDTO);
         Dish dish = new Dish();
-        BeanUtils.copyProperties(dishDTO,dish);
-        dishService.saveDish(dish,dishDTO);
+        BeanUtils.copyProperties(dishDTO, dish);
+        dishService.saveDish(dish, dishDTO);
         return Result.success();
     }
 
     /**
      * 菜品分页查询
+     *
      * @param query
      * @return
      */
     @GetMapping("/page")
     public Result<PageResult> page(DishPageQueryDTO query)
     {
-        log.info("菜品分页查询:{}",query);
+        log.info("菜品分页查询:{}", query);
         PageResult pageResult = dishService.pageQuery(query);
         return Result.success(pageResult);
     }
@@ -110,26 +112,28 @@ public class DishController {
 
     /**
      * 根据id查询菜品
+     *
      * @param id
      * @return
      */
     @GetMapping("/{id}")
     public Result<DishVO> getById(@PathVariable Long id)
     {
-        log.info("根据id查询菜品:{}",id);
-        DishVO data=dishService.getDishById(id);
+        log.info("根据id查询菜品:{}", id);
+        DishVO data = dishService.getDishById(id);
         return Result.success(data);
     }
 
     /**
      * 根据分类id查询菜品
+     *
      * @param categoryId
      * @return
      */
     @GetMapping("/list")
     public Result<List<Dish>> listById(Long categoryId)
     {
-        log.info("根据分类id查询菜品:{}",categoryId);
+        log.info("根据分类id查询菜品:{}", categoryId);
         List<Dish> dishes = dishService.lambdaQuery().eq(Dish::getCategoryId, categoryId).list();
         return Result.success(dishes);
     }
@@ -141,7 +145,7 @@ public class DishController {
      * @return
      */
     @PutMapping
-    @CacheEvict(cacheNames = "category", allEntries = true)
+    @CacheEvict(value = {"category", "setmeal"}, allEntries = true)
     public Result update(@RequestBody DishDTO dishDTO)
     {
         log.info("修改菜品:{}", dishDTO);
@@ -149,7 +153,6 @@ public class DishController {
         BeanUtils.copyProperties(dishDTO, dish);
         List<DishFlavor> flavors = dishDTO.getFlavors();
         dishService.updateWithFlavor(dish, flavors);
-
         return Result.success();
     }
 
@@ -168,7 +171,7 @@ public class DishController {
         // 查询ids关联的套餐
         List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class).in(Setmeal::getCategoryId, ids).list();
 
-        // 如果菜品关联了菜品，则无法删除
+        // 如果菜品关联了套餐，则无法删除
         if (setmeals.isEmpty())
             return Result.error(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
 

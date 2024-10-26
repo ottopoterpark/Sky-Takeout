@@ -12,6 +12,7 @@ import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.entity.SetmealDish;
 import com.sky.enumeration.OperationType;
 import com.sky.exception.BaseException;
 import com.sky.mapper.DishMapper;
@@ -176,6 +177,14 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             flavor.setDishId(dish.getId());
         }
         dishFlavorService.saveBatch(flavors);
+
+        // 更改关联套餐中的信息
+        Db.lambdaUpdate(SetmealDish.class)
+                .eq(SetmealDish::getDishId,dish.getId())
+                .set(dish.getName()!=null, SetmealDish::getName,dish.getName())
+                .set(dish.getPrice()!=null, SetmealDish::getPrice,dish.getPrice())
+                .update();
+
     }
 
     /**

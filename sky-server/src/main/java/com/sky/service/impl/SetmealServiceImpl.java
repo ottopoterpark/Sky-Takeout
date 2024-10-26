@@ -17,6 +17,7 @@ import com.sky.service.SetmealService;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
     @Override
     @Transactional
     @AutoFill(OperationType.INSERT)
+    @CacheEvict(value = {"setmeal","category"},allEntries = true)
     public void save(Setmeal setmeal, List<SetmealDish> setmealDishes)
     {
         // 默认新增套餐是停售的
@@ -126,6 +128,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
     @Override
     @Transactional
     @AutoFill(OperationType.UPDATE)
+    @CacheEvict(value = {"setmeal","category"},allEntries = true)
     public void update(Setmeal setmeal, List<SetmealDish> setmealDishes)
     {
         // 更新套餐信息
