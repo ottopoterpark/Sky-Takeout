@@ -196,6 +196,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         // 根据分类id查询菜品
         List<Dish> dishes = lambdaQuery()
                 .eq(Dish::getCategoryId, categoryId)
+                .eq(Dish::getStatus,StatusConstant.ENABLE)
                 .list();
 
         // 根据分类id查询分类名称

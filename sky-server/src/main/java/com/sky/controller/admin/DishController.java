@@ -52,6 +52,10 @@ public class DishController {
         BeanUtils.copyProperties(dishDTO,dish);
         dishService.saveDish(dish,dishDTO);
 
+        // 清除缓存数据
+        String key = "category_"+dish.getCategoryId();
+        cleanCache(key);
+
         return Result.success();
     }
 
@@ -79,33 +83,31 @@ public class DishController {
     {
         log.info("菜品起售、停售:{} {}",status,id);
 
-        // 如果要将菜品起售，直接修改状态
-        if(status.equals(StatusConstant.ENABLE))
-        {
-            dishService.lambdaUpdate()
-                    .eq(Dish::getId, id)
-                    .set(Dish::getStatus, status)
-                    .update();
-            return Result.success();
-        }
-
         // 查询菜品关联的套餐
         Set<Long> setmealIds = Db.lambdaQuery(SetmealDish.class).eq(SetmealDish::getDishId, id).list()
                 .stream().map(SetmealDish::getSetmealId).collect(Collectors.toSet());
 
-        // 查询这些套餐的销售状态
-        Set<Integer> setmealStatus = Db.lambdaQuery(Setmeal.class).in(Setmeal::getId, setmealIds).list()
-                .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
+        // 如果有关联套餐
+        if(!setmealIds.isEmpty())
+        {
+            // 查询这些套餐的销售状态
+            Set<Integer> setmealStatus = Db.lambdaQuery(Setmeal.class).in(Setmeal::getId, setmealIds).list()
+                    .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
 
-        // 如果关联套餐已经起售，则无法将菜品状态设为停售
-        if(setmealStatus.contains(StatusConstant.ENABLE))
-            return Result.error(MessageConstant.DISH_DISABLE_FAILED);
+            // 如果关联套餐已经起售，则无法将菜品状态设为停售
+            if(setmealStatus.contains(StatusConstant.ENABLE))
+                return Result.error(MessageConstant.DISH_DISABLE_FAILED);
+        }
 
         // 修改菜品状态
         dishService.lambdaUpdate()
                 .eq(Dish::getId, id)
                 .set(Dish::getStatus, status)
                 .update();
+
+        // 清除缓存
+        cleanCache("category_*");
+
         return Result.success();
     }
 
@@ -148,6 +150,10 @@ public class DishController {
         BeanUtils.copyProperties(dishDTO,dish);
         List<DishFlavor> flavors = dishDTO.getFlavors();
         dishService.updateWithFlavor(dish,flavors);
+
+        // 清除所有缓存
+        cleanCache("category_*");
+
         return Result.success();
     }
 
@@ -180,6 +186,21 @@ public class DishController {
         LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().in(DishFlavor::getDishId, ids);
         dishFlavorService.remove(wrapper);
 
+        // 清除所有缓存
+        cleanCache("category_*");
+
         return Result.success();
     }
+
+
+    /**
+     * 清除缓存
+     * @param pattern
+     */
+    private void cleanCache(String pattern)
+    {
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
+    }
+
 }

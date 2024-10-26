@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController("adminCategoryController")
 @RequestMapping("/admin/category")
@@ -91,6 +93,18 @@ public class CategoryController {
     public Result changeStatus(@PathVariable Integer status,Long id)
     {
         log.info("启用，禁用分类:{} {}",status,id);
+
+        // 查询关联的菜品和套餐
+        Set<Integer> dishStatus = Db.lambdaQuery(Dish.class).eq(Dish::getCategoryId, id).list()
+                .stream().map(Dish::getStatus).collect(Collectors.toSet());
+        Set<Integer> setmealStatus = Db.lambdaQuery(Setmeal.class).eq(Setmeal::getCategoryId, id).list()
+                .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
+
+        // 如果关联的菜品或套餐启用中则无法禁用分类
+        if(status.equals(StatusConstant.DISABLE)&&(dishStatus.contains(StatusConstant.ENABLE)||setmealStatus.contains(StatusConstant.ENABLE)))
+            return Result.error(MessageConstant.CATEGORY_DISABLE_FAILED);
+
+        // 修改状态
         categoryService.lambdaUpdate()
                 .eq(Category::getId,id)
                 .set(Category::getStatus,status)

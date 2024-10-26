@@ -79,8 +79,8 @@ public class SetmealController {
                 .stream().collect(Collectors.toMap(SetmealDish::getDishId, SetmealDish::getCopies));
 
         // 如果查询结果为空
-        if (setmealDishes == null || setmealDishes.size() == 0)
-            return Result.success(null);
+        if (setmealDishes == null || setmealDishes.isEmpty())
+            return Result.success(new ArrayList<>());
 
         // 查询出这些id所对应的菜品
         List<Dish> dishes = Db.lambdaQuery(Dish.class).in(Dish::getId, setmealDishes.keySet()).list();
