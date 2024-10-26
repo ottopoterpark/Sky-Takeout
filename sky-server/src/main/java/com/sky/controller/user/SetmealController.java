@@ -11,6 +11,7 @@ import com.sky.vo.DishItemVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,26 +41,15 @@ public class SetmealController {
      * @return
      */
     @GetMapping("/list")
+    @Cacheable(cacheNames = "category",key = "#categoryId")
     public Result<List<Setmeal>> list(Long categoryId)
     {
         log.info("根据分类id查询套餐:{}", categoryId);
 
-        // 查询redis中是否存在分类的展示数据
-        String key = "category_" + categoryId;
-        List<Setmeal> setmeals = (List<Setmeal>) redisTemplate.opsForValue().get(key);
-
-        // 存在则直接返回结果
-        if (setmeals!=null)
-            return Result.success(setmeals);
-
-        setmeals = setmealService.lambdaQuery()
+        List<Setmeal> setmeals = setmealService.lambdaQuery()
                 .eq(Setmeal::getCategoryId, categoryId)
                 .eq(Setmeal::getStatus, StatusConstant.ENABLE)
                 .list();
-
-        // redis缓存
-        redisTemplate.opsForValue().set(key,setmeals);
-
         return Result.success(setmeals);
     }
 

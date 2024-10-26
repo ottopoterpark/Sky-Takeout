@@ -22,6 +22,7 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,16 +184,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @return
      */
     @Override
+    @Cacheable(cacheNames = "category",key = "#categoryId")
     public List<DishVO> listWithCategoryNameAndFlavors(Long categoryId)
     {
-        // 查询redis中是否存在分类展示数据
-        String key="category_"+categoryId;
-        List<DishVO> dishVOS=(List<DishVO>) redisTemplate.opsForValue().get(key);
-
-        // 存在则直接返回结果
-        if(dishVOS!=null)
-            return dishVOS;
-
         // 根据分类id查询菜品
         List<Dish> dishes = lambdaQuery()
                 .eq(Dish::getCategoryId, categoryId)
@@ -210,7 +204,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
                 .stream().collect(Collectors.groupingBy(DishFlavor::getDishId));
 
         // 封装结果
-        dishVOS = new ArrayList<>();
+        List<DishVO> dishVOS = new ArrayList<>();
         for (Dish dish : dishes)
         {
             DishVO dishVO = new DishVO();
@@ -219,9 +213,6 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             dishVO.setFlavors(dishFlavors.get(dish.getId()));
             dishVOS.add(dishVO);
         }
-
-        // 存入redis
-        redisTemplate.opsForValue().set(key,dishVOS);
 
         // 返回结果
         return dishVOS;

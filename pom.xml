@@ -36,30 +36,38 @@
         <aop>3.3.4</aop>
         <redis>2.7.3</redis>
         <httpclent>4.5.14</httpclent>
+        <cache>2.7.5</cache>
     </properties>
 
 <!--    依赖控制-->
     <dependencyManagement>
         <dependencies>
+<!--            Spring Cache-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-cache</artifactId>
+                <version>${cache}</version>
+            </dependency>
 
+<!--            redis-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-redis</artifactId>
                 <version>${redis}</version>
             </dependency>
-
+<!--            Mybatis-Plus-->
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus}</version>
             </dependency>
-
+<!--            lombok注解-->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok}</version>
             </dependency>
-
+<!--            json工具包-->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
@@ -77,19 +85,19 @@
                 <artifactId>druid-spring-boot-starter</artifactId>
                 <version>${druid}</version>
             </dependency>
-
+<!--        aop面向切面编程-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-aop</artifactId>
                 <version>${aop}</version>
             </dependency>
-
+<!--        JWT令牌技术-->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt}</version>
             </dependency>
-
+<!--        OSS-->
             <dependency>
                 <groupId>com.aliyun.oss</groupId>
                 <artifactId>aliyun-sdk-oss</artifactId>

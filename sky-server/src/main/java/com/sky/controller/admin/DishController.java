@@ -18,9 +18,11 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import javax.naming.Name;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,17 +47,13 @@ public class DishController {
      * @return
      */
     @PostMapping
+    @CacheEvict(cacheNames = "category",key = "#dishDTO.getCategoryId()")
     public Result save(@RequestBody DishDTO dishDTO)
     {
         log.info("新增菜品:{}",dishDTO);
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO,dish);
         dishService.saveDish(dish,dishDTO);
-
-        // 清除缓存数据
-        String key = "category_"+dish.getCategoryId();
-        cleanCache(key);
-
         return Result.success();
     }
 
@@ -74,28 +72,30 @@ public class DishController {
 
     /**
      * 菜品起售、停售
+     *
      * @param status
      * @param id
      * @return
      */
     @PostMapping("/status/{status}")
-    public Result changeStatus(@PathVariable Integer status,Long id)
+    @CacheEvict(cacheNames = "category", allEntries = true)
+    public Result changeStatus(@PathVariable Integer status, Long id)
     {
-        log.info("菜品起售、停售:{} {}",status,id);
+        log.info("菜品起售、停售:{} {}", status, id);
 
         // 查询菜品关联的套餐
         Set<Long> setmealIds = Db.lambdaQuery(SetmealDish.class).eq(SetmealDish::getDishId, id).list()
                 .stream().map(SetmealDish::getSetmealId).collect(Collectors.toSet());
 
         // 如果有关联套餐
-        if(!setmealIds.isEmpty())
+        if (!setmealIds.isEmpty())
         {
             // 查询这些套餐的销售状态
             Set<Integer> setmealStatus = Db.lambdaQuery(Setmeal.class).in(Setmeal::getId, setmealIds).list()
                     .stream().map(Setmeal::getStatus).collect(Collectors.toSet());
 
             // 如果关联套餐已经起售，则无法将菜品状态设为停售
-            if(setmealStatus.contains(StatusConstant.ENABLE))
+            if (setmealStatus.contains(StatusConstant.ENABLE))
                 return Result.error(MessageConstant.DISH_DISABLE_FAILED);
         }
 
@@ -104,9 +104,6 @@ public class DishController {
                 .eq(Dish::getId, id)
                 .set(Dish::getStatus, status)
                 .update();
-
-        // 清除缓存
-        cleanCache("category_*");
 
         return Result.success();
     }
@@ -139,33 +136,34 @@ public class DishController {
 
     /**
      * 修改菜品
+     *
      * @param dishDTO
      * @return
      */
     @PutMapping
+    @CacheEvict(cacheNames = "category", allEntries = true)
     public Result update(@RequestBody DishDTO dishDTO)
     {
-        log.info("修改菜品:{}",dishDTO);
+        log.info("修改菜品:{}", dishDTO);
         Dish dish = new Dish();
-        BeanUtils.copyProperties(dishDTO,dish);
+        BeanUtils.copyProperties(dishDTO, dish);
         List<DishFlavor> flavors = dishDTO.getFlavors();
-        dishService.updateWithFlavor(dish,flavors);
-
-        // 清除所有缓存
-        cleanCache("category_*");
+        dishService.updateWithFlavor(dish, flavors);
 
         return Result.success();
     }
 
     /**
      * 批量删除菜品
+     *
      * @param ids
      * @return
      */
     @DeleteMapping
+    @CacheEvict(cacheNames = "category", allEntries = true)
     public Result delete(@RequestParam List<Long> ids)
     {
-        log.info("批量删除菜品:{}",ids);
+        log.info("批量删除菜品:{}", ids);
 
         // 查询ids关联的套餐
         List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class).in(Setmeal::getCategoryId, ids).list();
@@ -178,7 +176,7 @@ public class DishController {
         Set<Integer> status = dishService.lambdaQuery().in(Dish::getId, ids).list().stream().map(Dish::getStatus).collect(Collectors.toSet());
 
         // 如果菜品有起售的无法删除
-        if(status.contains(StatusConstant.ENABLE))
+        if (status.contains(StatusConstant.ENABLE))
             return Result.error(MessageConstant.DISH_ON_SALE);
 
         // 删除菜品和关联口味
@@ -186,21 +184,7 @@ public class DishController {
         LambdaQueryWrapper<DishFlavor> wrapper = new LambdaQueryWrapper<DishFlavor>().in(DishFlavor::getDishId, ids);
         dishFlavorService.remove(wrapper);
 
-        // 清除所有缓存
-        cleanCache("category_*");
-
         return Result.success();
-    }
-
-
-    /**
-     * 清除缓存
-     * @param pattern
-     */
-    private void cleanCache(String pattern)
-    {
-        Set keys = redisTemplate.keys(pattern);
-        redisTemplate.delete(keys);
     }
 
 }
