@@ -1,5 +1,6 @@
 package com.sky.controller.user;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.sky.context.BaseContext;
 import com.sky.dto.ShoppingCartDTO;
@@ -51,5 +52,18 @@ public class ShoppingCartController {
         Long userId = BaseContext.getCurrentId();
         List<ShoppingCart> shoppingCarts = shoppingCartService.lambdaQuery().eq(ShoppingCart::getUserId, userId).list();
         return Result.success(shoppingCarts);
+    }
+
+    /**
+     * 删减购物车
+     * @param shoppingCartDTO
+     * @return
+     */
+    @PostMapping("/sub")
+    public Result sub(@RequestBody ShoppingCartDTO shoppingCartDTO)
+    {
+        log.info("删减购物车:{}", shoppingCartDTO);
+        shoppingCartService.sub(shoppingCartDTO);
+        return Result.success();
     }
 }

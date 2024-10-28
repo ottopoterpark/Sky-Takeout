@@ -8,6 +8,7 @@ import com.sky.entity.Dish;
 import com.sky.entity.Setmeal;
 import com.sky.entity.ShoppingCart;
 import com.sky.mapper.ShoppingCartMapper;
+import com.sky.result.Result;
 import com.sky.service.ShoppingCartService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
 
     /**
      * 新增购物车
+     *
      * @param shoppingCartDTO
      */
     @Override
@@ -69,7 +71,6 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
                     .eq(shoppingCartDTO.getSetmealId() != null, ShoppingCart::getSetmealId, shoppingCartDTO.getSetmealId())
                     .eq(shoppingCartDTO.getDishFlavor() != null, ShoppingCart::getDishFlavor, shoppingCartDTO.getDishFlavor())
                     .set(ShoppingCart::getNumber, number)
-                    .set(ShoppingCart::getAmount, amount)
                     .update();
             return;
         }
@@ -99,5 +100,39 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
             shoppingCart.setImage(dish.getImage());
             save(shoppingCart);
         }
+    }
+
+    /**
+     * 删减购物车
+     *
+     * @param shoppingCartDTO
+     */
+    @Override
+    public void sub(ShoppingCartDTO shoppingCartDTO)
+    {
+        // 获取当前用户id
+        Long userId = BaseContext.getCurrentId();
+
+        // 查询购物车的数量
+        ShoppingCart shoppingCart = lambdaQuery()
+                .eq(ShoppingCart::getUserId, userId)
+                .eq(shoppingCartDTO.getDishId() != null, ShoppingCart::getDishId, shoppingCartDTO.getDishId())
+                .eq(shoppingCartDTO.getSetmealId() != null, ShoppingCart::getSetmealId, shoppingCartDTO.getSetmealId())
+                .eq(shoppingCartDTO.getDishFlavor() != null, ShoppingCart::getDishFlavor, shoppingCartDTO.getDishFlavor())
+                .one();
+        Integer number = shoppingCart.getNumber();
+
+        // 如果购物车数量为1，直接删去
+        if (number.equals(1))
+        {
+            removeById(shoppingCart.getId());
+            return;
+        }
+
+        // 如果购物车数量不为1，则数量-1
+        lambdaUpdate()
+                .eq(ShoppingCart::getId, shoppingCart.getId())
+                .set(ShoppingCart::getNumber, number - 1)
+                .update();
     }
 }
