@@ -72,8 +72,7 @@ public class AddressBookController {
 
     /**
      * 设置默认地址
-     *
-     * @param id
+     * @param addressBook
      * @return
      */
     @PutMapping("/default")
