@@ -11,10 +11,9 @@ import com.sky.service.ShoppingCartService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 购物车功能接口
@@ -39,5 +38,18 @@ public class ShoppingCartController {
         log.info("添加购物车:{}", shoppingCartDTO);
         shoppingCartService.add(shoppingCartDTO);
         return Result.success();
+    }
+
+    /**
+     * 查看购物车
+     * @return
+     */
+    @GetMapping("/list")
+    public Result<List<ShoppingCart>> list()
+    {
+        log.info("查看购物车");
+        Long userId = BaseContext.getCurrentId();
+        List<ShoppingCart> shoppingCarts = shoppingCartService.lambdaQuery().eq(ShoppingCart::getUserId, userId).list();
+        return Result.success(shoppingCarts);
     }
 }

@@ -8,7 +8,6 @@ import com.sky.entity.Dish;
 import com.sky.entity.Setmeal;
 import com.sky.entity.ShoppingCart;
 import com.sky.mapper.ShoppingCartMapper;
-import com.sky.result.Result;
 import com.sky.service.ShoppingCartService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -18,6 +17,11 @@ import java.time.LocalDateTime;
 
 @Service
 public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, ShoppingCart> implements ShoppingCartService {
+
+    /**
+     * 新增购物车
+     * @param shoppingCartDTO
+     */
     @Override
     public void add(ShoppingCartDTO shoppingCartDTO)
     {

@@ -5,5 +5,9 @@ import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.ShoppingCart;
 
 public interface ShoppingCartService extends IService<ShoppingCart> {
+    /**
+     * 新增购物车
+     * @param shoppingCartDTO
+     */
     void add(ShoppingCartDTO shoppingCartDTO);
 }
