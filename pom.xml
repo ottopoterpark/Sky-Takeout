@@ -37,6 +37,7 @@
         <redis>2.7.3</redis>
         <httpclent>4.5.14</httpclent>
         <cache>2.7.5</cache>
+        <ws>2.7.5</ws>
     </properties>
 
 <!--    依赖控制-->
@@ -103,7 +104,12 @@
                 <artifactId>aliyun-sdk-oss</artifactId>
                 <version>${aliyun.sdk.oss}</version>
             </dependency>
-
+<!--        WebSocket-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-websocket</artifactId>
+                <version>${ws}</version>
+            </dependency>
             <dependency>
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>

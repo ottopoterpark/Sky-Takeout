@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Component
 @Slf4j
@@ -19,7 +18,7 @@ public class OrderTask {
      * 支付超时定时处理
      * （每分钟执行一次）
      */
-    @Scheduled(cron = "0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void payTimeOut()
     {
@@ -39,7 +38,7 @@ public class OrderTask {
      * 一直派送定时处理
      * （每日凌晨1点执行一次）
      */
-    @Scheduled(cron = "0 * * * *")
+    @Scheduled(cron = "0 0 1 * * *")
     @Transactional
     public void deliverTimeOut()
     {
