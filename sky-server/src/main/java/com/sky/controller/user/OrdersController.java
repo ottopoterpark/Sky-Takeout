@@ -94,6 +94,7 @@ public class OrdersController {
     public Result repeat(@PathVariable Long id)
     {
         log.info("再来一单:{}",id);
+        ordersService.repeat(id);
         return Result.success();
     }
 

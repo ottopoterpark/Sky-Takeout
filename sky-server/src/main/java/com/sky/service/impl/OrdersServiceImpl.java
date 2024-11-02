@@ -10,6 +10,7 @@ import com.sky.context.BaseContext;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.OrdersMapper;
@@ -235,6 +236,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         lambdaQuery()
                 .eq(Orders::getUserId,userId)
                 .eq(ordersPageQueryDTO.getStatus()!=null,Orders::getStatus,ordersPageQueryDTO.getStatus())
+                .orderByDesc(Orders::getCheckoutTime)
                 .page(p);
 
         // 获取分页查询结果
@@ -265,5 +267,31 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
                 .total(total)
                 .records(orderVOS)
                 .build();
+    }
+
+    /**
+     * 再来一单
+     *
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void repeat(Long id)
+    {
+        // 查询订单明细
+        List<OrderDetail> orderDetails = Db.lambdaQuery(OrderDetail.class)
+                .eq(id != null, OrderDetail::getOrderId, id)
+                .list();
+
+        // 将订单菜品套餐重新添加回购物车
+        orderDetails.stream().forEach(o->{
+            Integer number = o.getNumber();
+            for (Integer i = 0; i < number; i++)
+            {
+                ShoppingCartDTO shoppingCartDTO = new ShoppingCartDTO();
+                BeanUtils.copyProperties(o,shoppingCartDTO);
+                shoppingCartService.add(shoppingCartDTO);
+            }
+        });
     }
 }

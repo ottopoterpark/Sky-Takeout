@@ -50,4 +50,10 @@ public interface OrdersService extends IService<Orders> {
      * @return
      */
     PageResult history(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    void repeat(Long id);
 }
