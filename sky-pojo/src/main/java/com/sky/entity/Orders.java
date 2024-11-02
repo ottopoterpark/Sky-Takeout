@@ -46,7 +46,7 @@ public class Orders implements Serializable {
     private LocalDateTime checkoutTime;                                     // 结账时间
     private Integer payMethod;                                              // 支付方式 1微信，2支付宝
     private Integer payStatus;                                              // 支付状态 0未支付 1已支付 2退款
-    private BigDecimal amount;                                              // 实收金额✔
+    private BigDecimal amount;                                              // 实收金额
     private String remark;                                                  // 备注
     private String userName;                                                // 用户名
     private String phone;                                                   // 手机号
@@ -58,7 +58,7 @@ public class Orders implements Serializable {
     private LocalDateTime estimatedDeliveryTime;                            // 预计送达时间
     private Integer deliveryStatus;                                         // 配送状态  1立即送出  0选择具体时间
     private LocalDateTime deliveryTime;                                     // 送达时间
-    private int packAmount;                                                 // 打包费✔
-    private int tablewareNumber;                                            // 餐具数量✔
-    private Integer tablewareStatus;                                        // 餐具数量状态  1按餐量提供  0选择具体数量✔
+    private int packAmount;                                                 // 打包费
+    private int tablewareNumber;                                            // 餐具数量
+    private Integer tablewareStatus;                                        // 餐具数量状态  1按餐量提供  0选择具体数量
 }

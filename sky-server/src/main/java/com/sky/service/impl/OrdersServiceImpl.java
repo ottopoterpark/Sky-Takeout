@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,19 +11,17 @@ import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.OrdersMapper;
-import com.sky.mapper.UserMapper;
 import com.sky.service.OrdersService;
 import com.sky.service.ShoppingCartService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import com.sky.webSocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -167,5 +166,50 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         // 消息推送
         String json = JSONObject.toJSONString(map);
         webSocketServer.sendToAllClient(json);
+    }
+
+    /**
+     * 用户催单
+     * @param id
+     */
+    @Override
+    public void reminder(Long id)
+    {
+        // 根据订单id查询订单
+        Orders order = Db.getById(id, Orders.class);
+
+        // 封装WebSocket参数
+        Map map=new HashMap();
+        map.put("type",2);
+        map.put("orderId",id);
+        map.put("content","订单号："+order.getNumber());
+
+        // 服务端向客户端发送消息
+        webSocketServer.sendToAllClient(JSON.toJSONString(map));
+    }
+
+    /**
+     * 查看订单详情
+     * @param id
+     * @return
+     */
+    @Override
+    public OrderVO one(Long id)
+    {
+        // 查询订单
+        Orders order = getById(id);
+
+        // 查询订单细节
+        List<OrderDetail> orderDetails = Db.lambdaQuery(OrderDetail.class)
+                .eq(OrderDetail::getOrderId, id)
+                .list();
+
+        // 封装结果
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(order,orderVO);
+        orderVO.setOrderDetailList(orderDetails);
+
+        // 返回结果
+        return orderVO;
     }
 }

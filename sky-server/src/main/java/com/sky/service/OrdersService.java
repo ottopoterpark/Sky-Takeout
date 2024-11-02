@@ -6,6 +6,7 @@ import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.Orders;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 
 public interface OrdersService extends IService<Orders> {
     /**
@@ -27,4 +28,17 @@ public interface OrdersService extends IService<Orders> {
      * @param outTradeNo
      */
     void paySuccess(String outTradeNo);
+
+    /**
+     * 用户催单
+     * @param id
+     */
+    void reminder(Long id);
+
+    /**
+     * 查看订单详情
+     * @param id
+     * @return
+     */
+    OrderVO one(Long id);
 }
