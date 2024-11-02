@@ -178,13 +178,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         // 根据订单id查询订单
         Orders order = Db.getById(id, Orders.class);
 
-        // 封装WebSocket参数
+        // 封装结果参数
         Map map=new HashMap();
         map.put("type",2);
         map.put("orderId",id);
         map.put("content","订单号："+order.getNumber());
 
-        // 服务端向客户端发送消息
+        // 通过WebSocket向客户端发送消息
         webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
 
