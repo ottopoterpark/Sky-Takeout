@@ -3,14 +3,17 @@ package com.sky.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.OrdersMapper;
+import com.sky.result.PageResult;
 import com.sky.service.OrdersService;
 import com.sky.service.ShoppingCartService;
 import com.sky.utils.WeChatPayUtil;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> implements OrdersService {
@@ -211,5 +215,55 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
 
         // 返回结果
         return orderVO;
+    }
+
+    /**
+     * 查询历史订单
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    @Override
+    public PageResult history(OrdersPageQueryDTO ordersPageQueryDTO)
+    {
+        // 获取当前用户
+        Long userId = BaseContext.getCurrentId();
+
+        // 构造分页参数
+        Page<Orders> p = Page.of(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+
+        // 进行分页条件查询
+        lambdaQuery()
+                .eq(Orders::getUserId,userId)
+                .eq(ordersPageQueryDTO.getStatus()!=null,Orders::getStatus,ordersPageQueryDTO.getStatus())
+                .page(p);
+
+        // 获取分页查询结果
+        long total = p.getTotal();
+        List<Orders> orders = p.getRecords();
+
+        // 获取订单id
+        List<Long> orderIds = orders.stream().map(Orders::getId).toList();
+
+        // 将订单id与关联的订单细则组成Map
+        Map<Long, List<OrderDetail>> orderDetails = Db.lambdaQuery(OrderDetail.class)
+                .in(!orderIds.isEmpty(), OrderDetail::getOrderId, orderIds)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(OrderDetail::getOrderId));
+
+        // 封装结果
+        List<OrderVO> orderVOS=new ArrayList<>();
+        orders.stream().forEach(o->{
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(o,orderVO);
+            orderVO.setOrderDetailList(orderDetails.get(o.getId()));
+            orderVOS.add(orderVO);
+        });
+
+        // 返回结果
+        return PageResult.builder()
+                .total(total)
+                .records(orderVOS)
+                .build();
     }
 }
