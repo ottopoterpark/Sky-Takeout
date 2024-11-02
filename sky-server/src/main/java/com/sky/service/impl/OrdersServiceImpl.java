@@ -308,4 +308,57 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
                 .set(Orders::getStatus,Orders.CANCELLED)
                 .update();
     }
+
+    /**
+     * 订单搜索
+     * @param queryDTO
+     * @return
+     */
+    @Override
+    public PageResult conditionSearch(OrdersPageQueryDTO queryDTO)
+    {
+        // 构造分页参数
+        Page<Orders> page = Page.of(queryDTO.getPage(), queryDTO.getPageSize());
+
+        // 分页条件查询
+        lambdaQuery()
+                .like(queryDTO.getNumber()!=null,Orders::getNumber,queryDTO.getNumber())
+                .like(queryDTO.getPhone()!=null,Orders::getPhone,queryDTO.getPhone())
+                .eq(queryDTO.getStatus()!=null,Orders::getStatus,queryDTO.getStatus())
+                .ge(queryDTO.getBeginTime()!=null,Orders::getOrderTime,queryDTO.getBeginTime())
+                .le(queryDTO.getEndTime()!=null,Orders::getOrderTime,queryDTO.getEndTime())
+                .page(page);
+
+        // 获得分页结果
+        long total = page.getTotal();
+        List<Orders> orders = page.getRecords();
+
+        // 获得订单ids
+        List<Long> orderIds = orders.stream().map(Orders::getId).toList();
+
+        // 查询订单明细
+        Map<Long, List<OrderDetail>> orderDetails = Db.lambdaQuery(OrderDetail.class)
+                .in(!orderIds.isEmpty(), OrderDetail::getOrderId, orderIds)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(OrderDetail::getOrderId));
+
+        // 封装结果
+        List<OrderVO> orderVOS=new ArrayList<>();
+        orders.stream().forEach(o->{
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(o,orderVO);
+            List<OrderDetail> orderDetailList = orderDetails.get(o.getId());
+            String dishes = orderDetailList.stream().map(OrderDetail::getName).toList().toString();
+            orderVO.setOrderDetailList(orderDetailList);
+            orderVO.setOrderDishes(dishes);
+            orderVOS.add(orderVO);
+        });
+
+        // 返回结果
+        return PageResult.builder()
+                .total(total)
+                .records(orderVOS)
+                .build();
+    }
 }

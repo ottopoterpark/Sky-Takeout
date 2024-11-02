@@ -62,4 +62,11 @@ public interface OrdersService extends IService<Orders> {
      * @param id
      */
     void cancel(Long id);
+
+    /**
+     * 订单搜索
+     * @param queryDTO
+     * @return
+     */
+    PageResult conditionSearch(OrdersPageQueryDTO queryDTO);
 }
