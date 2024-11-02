@@ -294,4 +294,18 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
             }
         });
     }
+
+    /**
+     * 取消订单
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void cancel(Long id)
+    {
+        lambdaUpdate()
+                .eq(Orders::getId,id)
+                .set(Orders::getStatus,Orders.CANCELLED)
+                .update();
+    }
 }

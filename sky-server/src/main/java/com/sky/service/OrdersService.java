@@ -56,4 +56,10 @@ public interface OrdersService extends IService<Orders> {
      * @param id
      */
     void repeat(Long id);
+
+    /**
+     * 取消订单
+     * @param id
+     */
+    void cancel(Long id);
 }

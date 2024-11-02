@@ -46,7 +46,7 @@ public class OrderTask {
         // 查询正在等待接单且下单时间在当前时间十五分钟前的订单
         Db.lambdaUpdate(Orders.class)
                 .eq(Orders::getStatus, Orders.TO_BE_CONFIRMED)
-                .lt(Orders::getOrderTime, LocalDateTime.now().minusMinutes(15))
+                .lt(Orders::getCheckoutTime, LocalDateTime.now().minusMinutes(15))
                 .set(Orders::getStatus,Orders.CANCELLED)
                 .set(Orders::getPayStatus,Orders.REFUND)
                 .set(Orders::getCancelReason,"商家接单超时，自动取消")

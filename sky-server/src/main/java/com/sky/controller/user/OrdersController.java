@@ -110,4 +110,12 @@ public class OrdersController {
         PageResult pageResult=ordersService.history(ordersPageQueryDTO);
         return Result.success(pageResult);
     }
+
+    @PutMapping("/cancel/{id}")
+    public Result cancel(@PathVariable Long id)
+    {
+        log.info("取消订单:{}",id);
+        ordersService.cancel(id);
+        return Result.success();
+    }
 }
