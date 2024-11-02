@@ -35,10 +35,29 @@ public class OrderTask {
     }
 
     /**
-     * 一直派送定时处理
-     * （每日凌晨1点执行一次）
+     * 接单超时定时处理（每分钟执行一次）
      */
-    @Scheduled(cron = "0 0 1 * * *")
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void acceptTimeOut()
+    {
+        log.info("定时处理接单超时的订单:{}", LocalDateTime.now());
+
+        // 查询正在等待接单且下单时间在当前时间十五分钟前的订单
+        Db.lambdaUpdate(Orders.class)
+                .eq(Orders::getStatus, Orders.TO_BE_CONFIRMED)
+                .lt(Orders::getOrderTime, LocalDateTime.now().minusMinutes(15))
+                .set(Orders::getStatus,Orders.CANCELLED)
+                .set(Orders::getPayStatus,Orders.REFUND)
+                .set(Orders::getCancelReason,"商家接单超时，自动取消")
+                .set(Orders::getCancelTime,LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * 派送超时定时处理（每分钟执行一次）
+     */
+    @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void deliverTimeOut()
     {
@@ -46,8 +65,8 @@ public class OrderTask {
 
         // 查询处于派送中的订单
         Db.lambdaUpdate(Orders.class)
-                .eq(Orders::getStatus, Orders.PENDING_PAYMENT)
-                .lt(Orders::getOrderTime, LocalDateTime.now().minusHours(1))
+                .eq(Orders::getStatus, Orders.DELIVERY_IN_PROGRESS)
+                .lt(Orders::getOrderTime, LocalDateTime.now().minusHours(2))
                 .set(Orders::getStatus,Orders.COMPLETED)
                 .update();
     }
