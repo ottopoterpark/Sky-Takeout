@@ -431,8 +431,22 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     public void delivery(Long id)
     {
         lambdaUpdate()
-                .eq(Orders::getId,id)
+                .eq(id!=null,Orders::getId,id)
                 .set(Orders::getStatus,Orders.DELIVERY_IN_PROGRESS)
+                .update();
+    }
+
+    /**
+     * 完成订单
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void complete(Long id)
+    {
+        lambdaUpdate()
+                .eq(id!=null,Orders::getId,id)
+                .set(Orders::getStatus,Orders.COMPLETED)
                 .update();
     }
 }
