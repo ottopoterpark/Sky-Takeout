@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
-import com.sky.dto.ShoppingCartDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.OrdersMapper;
@@ -297,7 +294,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     }
 
     /**
-     * 取消订单
+     * 取消订单（用户）
      * @param id
      */
     @Override
@@ -447,6 +444,38 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         lambdaUpdate()
                 .eq(id!=null,Orders::getId,id)
                 .set(Orders::getStatus,Orders.COMPLETED)
+                .update();
+    }
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    @Override
+    @Transactional
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO)
+    {
+        lambdaUpdate()
+                .eq(ordersRejectionDTO.getId()!=null,Orders::getId,ordersRejectionDTO.getId())
+                .set(Orders::getStatus,Orders.CANCELLED)
+                .set(ordersRejectionDTO.getRejectionReason()!=null,Orders::getCancelReason,ordersRejectionDTO.getRejectionReason())
+                .set(Orders::getCancelTime,LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * 取消订单（商家）
+     * @param ordersCancelDTO
+     */
+    @Override
+    @Transactional
+    public void cancel(OrdersCancelDTO ordersCancelDTO)
+    {
+        lambdaUpdate()
+                .eq(ordersCancelDTO.getId()!=null,Orders::getId,ordersCancelDTO.getId())
+                .set(Orders::getStatus,Orders.CANCELLED)
+                .set(ordersCancelDTO.getCancelReason()!=null,Orders::getCancelReason,ordersCancelDTO.getCancelReason())
+                .set(Orders::getCancelTime,LocalDateTime.now())
                 .update();
     }
 }

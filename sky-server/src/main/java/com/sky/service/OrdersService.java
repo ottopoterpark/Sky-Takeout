@@ -1,9 +1,7 @@
 package com.sky.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.Orders;
 import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
@@ -59,7 +57,7 @@ public interface OrdersService extends IService<Orders> {
     void repeat(Long id);
 
     /**
-     * 取消订单
+     * 取消订单（用户）
      * @param id
      */
     void cancel(Long id);
@@ -94,4 +92,16 @@ public interface OrdersService extends IService<Orders> {
      * @param id
      */
     void complete(Long id);
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    void rejection(OrdersRejectionDTO ordersRejectionDTO);
+
+    /**
+     * 取消订单（商家）
+     * @param ordersCancelDTO
+     */
+    void cancel(OrdersCancelDTO ordersCancelDTO);
 }
