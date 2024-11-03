@@ -421,4 +421,18 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
                 .set(Orders::getStatus,Orders.CONFIRMED)
                 .update();
     }
+
+    /**
+     * 派送订单
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void delivery(Long id)
+    {
+        lambdaUpdate()
+                .eq(Orders::getId,id)
+                .set(Orders::getStatus,Orders.DELIVERY_IN_PROGRESS)
+                .update();
+    }
 }

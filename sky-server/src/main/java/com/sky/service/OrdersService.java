@@ -82,4 +82,10 @@ public interface OrdersService extends IService<Orders> {
      * @param id
      */
     void confirm(Long id);
+
+    /**
+     * 派送订单
+     * @param id
+     */
+    void delivery(Long id);
 }

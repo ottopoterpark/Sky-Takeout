@@ -72,4 +72,17 @@ public class OrdersController {
         ordersService.confirm(ordersConfirmDTO.getId());
         return Result.success();
     }
+
+    /**
+     * 派送订单
+     * @param id
+     * @return
+     */
+    @PutMapping("/delivery/{id}")
+    public Result delivery(@PathVariable Long id)
+    {
+        log.info("派送订单:{}",id);
+        ordersService.delivery(id);
+        return Result.success();
+    }
 }
