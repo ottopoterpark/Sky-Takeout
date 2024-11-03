@@ -1,22 +1,20 @@
 package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.User;
-import com.sky.service.OrdersService;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -228,6 +226,72 @@ public class ReportServiceImpl implements ReportService {
                 .totalOrderCount(totalOrderCount)
                 .validOrderCount(validOrderCount)
                 .orderCompletionRate(orderCompletionRate)
+                .build();
+    }
+
+    /**
+     * 查询销量排名top10
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public SalesTop10ReportVO top10(LocalDate begin, LocalDate end)
+    {
+        // 查询时间区间内的所有订单
+        List<Orders> orders = Db.lambdaQuery(Orders.class)
+                .ge(Orders::getCheckoutTime, begin.atStartOfDay())
+                .lt(Orders::getCheckoutTime, end.plusDays(1).atStartOfDay())
+                .eq(Orders::getStatus,Orders.COMPLETED)
+                .list();
+
+        // 如果时间区间内订单数为0
+        if(orders.isEmpty())
+            return SalesTop10ReportVO.builder()
+                    .nameList("")
+                    .numberList("")
+                    .build();
+
+        // 获得时间区间内的所有订单id
+        List<Long> orderIds = orders.stream().map(Orders::getId).toList();
+
+        // 查询时间区间内的所有订单细则
+        List<OrderDetail> orderDetails = Db.lambdaQuery(OrderDetail.class)
+                .in(!orderIds.isEmpty(), OrderDetail::getOrderId, orderIds)
+                .list();
+
+        // 计算商品与销量的关系
+        Map<String,Integer> map=new HashMap<>();
+        orderDetails.stream().forEach(o->{
+            String name = o.getName();
+            Integer number = o.getNumber();
+            if (!map.containsKey(name))
+                map.put(name,number);
+            if(map.containsKey(name))
+            {
+                Integer tmp = map.get(name);
+                number+=tmp;
+                map.put(name,number);
+            }
+        });
+
+        // 对销量进行排序并取前十个
+        List<Map.Entry<String, Integer>>  top10= map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(10)
+                .toList();
+
+        // 封装结果
+        List<String> names = top10.stream().map(Map.Entry::getKey).toList();
+        List<Integer> numbers = top10.stream().map(Map.Entry::getValue).toList();
+        String nameList = StringUtils.join(names, ",");
+        String numberList = StringUtils.join(numbers, ",");
+
+        // 返回结果
+        return SalesTop10ReportVO.builder()
+                .nameList(nameList)
+                .numberList(numberList)
                 .build();
     }
 }
