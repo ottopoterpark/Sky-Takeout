@@ -19,6 +19,7 @@ import com.sky.service.OrdersService;
 import com.sky.service.ShoppingCartService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import com.sky.webSocket.WebSocketServer;
@@ -360,5 +361,45 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
                 .total(total)
                 .records(orderVOS)
                 .build();
+    }
+
+
+    /**
+     * 各个状态的订单数量统计
+     * @return
+     */
+    @Override
+    public OrderStatisticsVO statistics()
+    {
+        // 查询待接单，已接单，派送中的订单
+        List<Orders> orders = lambdaQuery()
+                .eq(Orders::getStatus, Orders.TO_BE_CONFIRMED)
+                .or()
+                .eq(Orders::getStatus, Orders.CONFIRMED)
+                .or()
+                .eq(Orders::getStatus, Orders.DELIVERY_IN_PROGRESS)
+                .list();
+
+        // 对待接单，已接单和派送中的订单进行计数统计
+        long toBeConfirmed = orders.stream().filter(o -> {
+            return o.getStatus().equals(Orders.TO_BE_CONFIRMED);
+        }).count();
+        long confirmed = orders.stream().filter(o ->
+        {
+            return o.getStatus().equals(Orders.CONFIRMED);
+        }).count();
+        long deliveryInProgress = orders.stream().filter(o ->
+        {
+            return o.getStatus().equals(Orders.DELIVERY_IN_PROGRESS);
+        }).count();
+
+        // 封装结果
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setToBeConfirmed((int)toBeConfirmed);
+        orderStatisticsVO.setConfirmed((int)confirmed);
+        orderStatisticsVO.setDeliveryInProgress((int)deliveryInProgress);
+
+        // 返回结果
+        return orderStatisticsVO;
     }
 }
