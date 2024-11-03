@@ -126,7 +126,7 @@ public class ReportServiceImpl implements ReportService {
             if(tmpUsers==null||tmpUsers.isEmpty())
             {
                 newUsers.add(0L);
-                totalUsers.add(0L);
+                totalUsers.add(total);
                 continue;
             }
             total+=userList.get(date).size();
