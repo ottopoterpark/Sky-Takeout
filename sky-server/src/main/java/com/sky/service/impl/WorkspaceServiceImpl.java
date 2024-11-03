@@ -1,12 +1,19 @@
 package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.sky.constant.StatusConstant;
+import com.sky.entity.Dish;
 import com.sky.entity.Orders;
+import com.sky.entity.Setmeal;
 import com.sky.entity.User;
+import com.sky.result.Result;
 import com.sky.service.WorkspaceService;
 import com.sky.vo.BusinessDataVO;
+import com.sky.vo.DishOverViewVO;
 import com.sky.vo.OrderOverViewVO;
+import com.sky.vo.SetmealOverViewVO;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -94,6 +101,50 @@ public class WorkspaceServiceImpl implements WorkspaceService {
                 .completedOrders(completedOrders)
                 .cancelledOrders(cancelledOrders)
                 .allOrders(allOrders)
+                .build();
+    }
+
+    /**
+     * 查询菜品总览
+     * @return
+     */
+    @Override
+    public DishOverViewVO overviewDishes()
+    {
+        // 查询所有菜品
+        List<Dish> dishes = Db.lambdaQuery(Dish.class)
+                .list();
+
+        // 分别统计启售和停售的菜品
+        Integer sold = (int) dishes.stream().filter(d -> d.getStatus().equals(StatusConstant.ENABLE)).count();
+        Integer discontinued = (int) dishes.stream().filter(d -> d.getStatus().equals(StatusConstant.DISABLE)).count();
+
+        // 返回结果
+        return DishOverViewVO.builder()
+                .sold(sold)
+                .discontinued(discontinued)
+                .build();
+    }
+
+    /**
+     * 查询套餐总览
+     * @return
+     */
+    @Override
+    public SetmealOverViewVO overviewSetmeals()
+    {
+        // 查询所有套餐
+        List<Setmeal> setmeals = Db.lambdaQuery(Setmeal.class)
+                .list();
+
+        // 分别统计启售和停售的套餐
+        Integer sold = (int) setmeals.stream().filter(s -> s.getStatus().equals(StatusConstant.ENABLE)).count();
+        Integer discontinued = (int) setmeals.stream().filter(s -> s.getStatus().equals(StatusConstant.DISABLE)).count();
+
+        // 返回结果
+        return SetmealOverViewVO.builder()
+                .sold(sold)
+                .discontinued(discontinued)
                 .build();
     }
 }
