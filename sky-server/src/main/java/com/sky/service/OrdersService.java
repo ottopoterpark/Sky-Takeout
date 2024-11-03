@@ -77,4 +77,9 @@ public interface OrdersService extends IService<Orders> {
      */
     OrderStatisticsVO statistics();
 
+    /**
+     * 接单
+     * @param id
+     */
+    void confirm(Long id);
 }

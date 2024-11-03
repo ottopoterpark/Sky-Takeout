@@ -318,6 +318,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     @Override
     public PageResult conditionSearch(OrdersPageQueryDTO queryDTO)
     {
+        // 避免分页参数进入条件查询
+        if(queryDTO.getStatus()!=null||queryDTO.getNumber()!=null||queryDTO.getPhone()!=null||queryDTO.getBeginTime()!=null)
+            queryDTO.setPage(1);
+
         // 构造分页参数
         Page<Orders> page = Page.of(queryDTO.getPage(), queryDTO.getPageSize());
 
@@ -328,6 +332,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
                 .eq(queryDTO.getStatus()!=null,Orders::getStatus,queryDTO.getStatus())
                 .ge(queryDTO.getBeginTime()!=null,Orders::getOrderTime,queryDTO.getBeginTime())
                 .le(queryDTO.getEndTime()!=null,Orders::getOrderTime,queryDTO.getEndTime())
+                .orderByDesc(Orders::getOrderTime)
                 .page(page);
 
         // 获得分页结果
@@ -401,5 +406,19 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
 
         // 返回结果
         return orderStatisticsVO;
+    }
+
+    /**
+     * 接单
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void confirm(Long id)
+    {
+        lambdaUpdate()
+                .eq(id!=null,Orders::getId,id)
+                .set(Orders::getStatus,Orders.CONFIRMED)
+                .update();
     }
 }
