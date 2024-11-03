@@ -5,6 +5,7 @@ import com.sky.entity.Orders;
 import com.sky.entity.User;
 import com.sky.service.OrdersService;
 import com.sky.service.ReportService;
+import com.sky.vo.OrderReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import org.apache.commons.lang.StringUtils;
@@ -143,6 +144,90 @@ public class ReportServiceImpl implements ReportService {
                 .dateList(dateList)
                 .newUserList(newUserList)
                 .totalUserList(totalUserList)
+                .build();
+    }
+
+    /**
+     * 订单统计
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end)
+    {
+        // 获得时间区间里的每一天
+        List<LocalDate> dates=new ArrayList<>();
+        LocalDate tmpBegin = begin;
+        dates.add(tmpBegin);
+        while (!tmpBegin.equals(end))
+        {
+            tmpBegin = tmpBegin.plusDays(1);
+            dates.add(tmpBegin);
+        }
+
+        // 获得符合格式要求的日期集合字符串
+        String dateList = StringUtils.join(dates, ",");
+
+        // 查询时间区间内的所有订单
+        List<Orders> orders = Db.lambdaQuery(Orders.class)
+                .ge(Orders::getCheckoutTime, begin.atStartOfDay())
+                .lt(Orders::getCheckoutTime, end.plusDays(1).atStartOfDay())
+                .list();
+
+        // 获得时间区间内的所有订单总数
+        Integer totalOrderCount = (int)orders.stream().count();
+
+        // 获得符合格式要求的所有订单字符串
+        Map<LocalDate, List<Orders>> orderList = orders.stream().collect(Collectors.groupingBy(o -> o.getCheckoutTime().toLocalDate()));
+        List<Long> orderCounts=new ArrayList<>();
+        for (LocalDate date : dates)
+        {
+            List<Orders> tmpOrders = orderList.get(date);
+            if(tmpOrders==null||tmpOrders.isEmpty())
+            {
+                orderCounts.add(0L);
+                continue;
+            }
+            orderCounts.add((long)tmpOrders.size());
+        }
+        String orderCountList = StringUtils.join(orderCounts, ",");
+
+        // 获得时间区间内的有效订单
+        List<Orders> validOrders = orders.stream().filter(o ->
+        {
+            return o.getStatus().equals(Orders.COMPLETED);
+        }).toList();
+
+        // 获得时间区间内的有效订单总数
+        Integer validOrderCount = (int) validOrders.stream().count();
+
+        // 获得订单完成率
+        Double orderCompletionRate=validOrderCount.doubleValue()/totalOrderCount.doubleValue();
+
+        // 获得符合格式要求的有效订单字符串
+        Map<LocalDate, List<Orders>> validOrderList = validOrders.stream().collect(Collectors.groupingBy(o -> o.getCheckoutTime().toLocalDate()));
+        List<Long> validOrderCounts=new ArrayList<>();
+        for (LocalDate date : dates)
+        {
+            List<Orders> tmpValidOrders = validOrderList.get(date);
+            if(tmpValidOrders==null||tmpValidOrders.isEmpty())
+            {
+                validOrderCounts.add(0L);
+                continue;
+            }
+            validOrderCounts.add((long)tmpValidOrders.size());
+        }
+        String validOrderCountList = StringUtils.join(validOrderCounts, ",");
+
+        // 返回结果
+        return OrderReportVO.builder()
+                .dateList(dateList)
+                .orderCountList(orderCountList)
+                .validOrderCountList(validOrderCountList)
+                .totalOrderCount(totalOrderCount)
+                .validOrderCount(validOrderCount)
+                .orderCompletionRate(orderCompletionRate)
                 .build();
     }
 }
